@@ -1,0 +1,38 @@
+# Publica la versión del kit al llegar a `main`.
+#
+# `raizell:actualizar` trae el kit clonando el tag `v<version>`: sin tag, la
+# versión no existe para los proyectos. Aquí el tag sale solo de `version` en
+# raizell-front-kit.json, y solo si CHANGELOG.md tiene su sección (si no, rojo).
+
+name: publicar versión
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: pruebas del kit
+        run: node --test raizell-kit/scripts/*.test.mjs
+      - name: tag de la versión
+        id: tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          node scripts/publicar-version.mjs --ejecutar --notas "$RUNNER_TEMP/notas.md"
+      - name: release en GitHub
+        if: steps.tag.outputs.accion == 'crear'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ steps.tag.outputs.tag }}" --title "Raizell Front Kit ${{ steps.tag.outputs.tag }}" --notes-file "${{ steps.tag.outputs.notas }}"
