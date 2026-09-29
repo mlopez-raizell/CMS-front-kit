@@ -1,0 +1,18 @@
+# Dependencias
+node_modules/
+
+# Entorno: aquí van las claves, nunca se versionan
+.env.local
+.env.*.local
+
+# Lo que vuelca `cms:descubrir` (contenido del site, puede incluir borradores)
+.cms-kit/
+
+# Next.js
+.next/
+out/
+
+# SO y editor
+.DS_Store
+.vscode/
+*.swp
