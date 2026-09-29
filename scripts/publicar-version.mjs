@@ -5,9 +5,9 @@
 //   node scripts/publicar-version.mjs --ejecutar # además crea y sube el tag
 //
 // Lo llama la acción `.github/workflows/publicar-version.yml` en cada push a
-// `main`. `raizell:actualizar` trae el kit clonando el tag `v<version>`: sin
+// `main`. `cms:actualizar` trae el kit clonando el tag `v<version>`: sin
 // tag, la versión no existe para ningún proyecto. Por eso el tag sale solo de
-// `version` en raizell-front-kit.json, y solo si CHANGELOG.md tiene la sección
+// `version` en cms-front-kit.json, y solo si CHANGELOG.md tiene la sección
 // `## v<version>`: publicar sin decir qué trae no vale.
 
 import { execFileSync } from "node:child_process";
@@ -31,7 +31,7 @@ export function seccionChangelog(texto, version) {
 export function decidir({ version, seccion, tagSha, headSha }) {
   const tag = `v${version}`;
   if (!/^\d+\.\d+\.\d+$/.test(version)) {
-    return { accion: "error", tag, motivo: `«${version}» no es una versión X.Y.Z (raizell-front-kit.json)` };
+    return { accion: "error", tag, motivo: `«${version}» no es una versión X.Y.Z (cms-front-kit.json)` };
   }
   if (tagSha && tagSha === headSha) return { accion: "nada", tag, motivo: `${tag} ya apunta a este commit` };
   if (tagSha) {
@@ -55,7 +55,7 @@ function main() {
   const iNotas = args.indexOf("--notas");
   const notas = iNotas >= 0 ? args[iNotas + 1] : join(tmpdir(), "publicar-notas.md");
 
-  const { version } = JSON.parse(readFileSync("raizell-front-kit.json", "utf8"));
+  const { version } = JSON.parse(readFileSync("cms-front-kit.json", "utf8"));
   const seccion = seccionChangelog(readFileSync("CHANGELOG.md", "utf8"), version);
   const headSha = git("rev-parse", "HEAD");
   const remoto = git("ls-remote", "--tags", "origin", `refs/tags/v${version}`);
@@ -71,7 +71,7 @@ function main() {
   if (d.accion !== "crear" || !ejecutar) return;
 
   writeFileSync(notas, seccion + "\n");
-  git("tag", "-a", d.tag, "-m", `Raizell Front Kit ${d.tag}`);
+  git("tag", "-a", d.tag, "-m", `CMS Front Kit ${d.tag}`);
   git("push", "origin", `refs/tags/${d.tag}`);
   console.log(`${d.tag} creado y subido; notas en ${notas}`);
 }

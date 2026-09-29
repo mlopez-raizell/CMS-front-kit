@@ -1,5 +1,5 @@
 {
-  "nombre": "raizell-front-kit",
+  "nombre": "cms-front-kit",
   "version": "0.1.0",
   "repositorio": "https://github.com/mlopez-raizell/CMS-front-kit.git",
   "sdk": {
@@ -11,15 +11,15 @@
     "medios": "https://mrkbhppzvdhqxzaorpja.supabase.co/storage/v1/object/public/medios"
   },
   "ficheros": [
-    "AGENTS.raizell.md",
-    "raizell-front-kit.json",
-    "raizell-kit/CHECKLIST.md",
-    "raizell-kit/scripts/instalar.mjs",
-    "raizell-kit/scripts/kit.mjs",
-    "raizell-kit/scripts/comprobar.mjs",
-    "raizell-kit/scripts/descubrir.mjs",
-    "raizell-kit/scripts/lib/**",
-    "raizell-kit/plantillas/**",
-    ".claude/skills/raizell-*/**"
+    "AGENTS.cms.md",
+    "cms-front-kit.json",
+    "cms-kit/CHECKLIST.md",
+    "cms-kit/scripts/instalar.mjs",
+    "cms-kit/scripts/kit.mjs",
+    "cms-kit/scripts/comprobar.mjs",
+    "cms-kit/scripts/descubrir.mjs",
+    "cms-kit/scripts/lib/**",
+    "cms-kit/plantillas/**",
+    ".claude/skills/cms-front-*/**"
   ]
 }

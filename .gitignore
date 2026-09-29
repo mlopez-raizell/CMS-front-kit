@@ -5,8 +5,8 @@ node_modules/
 .env.local
 .env.*.local
 
-# Lo que vuelca `raizell:descubrir` (contenido del site, puede incluir borradores)
-.raizell/
+# Lo que vuelca `cms:descubrir` (contenido del site, puede incluir borradores)
+.cms-kit/
 
 # Next.js
 .next/

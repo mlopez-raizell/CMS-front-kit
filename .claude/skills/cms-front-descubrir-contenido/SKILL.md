@@ -1,5 +1,5 @@
 ---
-name: raizell-descubrir-contenido
+name: cms-front-descubrir-contenido
 description: Úsala ANTES de escribir cualquier componente, página o tipo que pinte contenido del CMS de Raizell, y cuando algo no aparece o llega distinto de lo esperado. Dispara con "qué campos tiene", "cómo se llama el bloque", "qué páginas hay", "pinta la página de", "haz el componente de", "no sale el campo", "viene vacío", "el cliente ha añadido", "ha cambiado el contenido".
 ---
 
@@ -17,17 +17,17 @@ no vale para este.
 
 ## El recorrido
 
-1. **Pregunta**: `npm run raizell:descubrir`
+1. **Pregunta**: `npm run cms:descubrir`
    (con `-- --previa` si el site está en construcción o quieres ver borradores).
-2. **Lee** `.raizell/descubierto/RESUMEN.md`: idiomas, módulos, rutas y, por
+2. **Lee** `.cms-kit/descubierto/RESUMEN.md`: idiomas, módulos, rutas y, por
    cada ruta, qué propiedades llegan, de qué tipo y con qué ejemplo.
 3. **Si necesitas el detalle**, abre la respuesta completa de esa ruta en
-   `.raizell/descubierto/contenido/`.
+   `.cms-kit/descubierto/contenido/`.
 4. **Para los tipos**, usa los que exporta el SDK instalado. No declares a
    mano una forma que el paquete ya tipa.
 5. **Escribe el código** contra lo que has visto.
 
-`.raizell/` no se versiona: es una foto de un momento, y puede llevar
+`.cms-kit/` no se versiona: es una foto de un momento, y puede llevar
 borradores.
 
 ## Cuándo se repite
@@ -71,4 +71,4 @@ el código no puede depender de que nada cambie:
 - Un tipo declarado a mano para algo que viene del SDK.
 - Un componente que lanza un error ante un tipo de bloque desconocido.
 - Datos de ejemplo escritos en el código «mientras tanto».
-- Ficheros de `.raizell/` añadidos a git.
+- Ficheros de `.cms-kit/` añadidos a git.

@@ -1,6 +1,6 @@
 // Pruebas del kit. Se quedan en el repositorio del kit: no se instalan en los fronts.
 //
-//   node --test raizell-kit/scripts/*.test.mjs
+//   node --test cms-kit/scripts/*.test.mjs
 //
 // Montan un front de mentira en una carpeta temporal, con un SDK de mentira en
 // node_modules, y ejecutan los scripts de verdad contra él.
@@ -18,7 +18,7 @@ import { expandir, leerManifiesto } from "./lib/manifiesto.mjs";
 import { comparar, tramoChangelog } from "./kit.mjs";
 
 const KIT = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
-const INSTALADOR = join(KIT, "raizell-kit", "scripts", "instalar.mjs");
+const INSTALADOR = join(KIT, "cms-kit", "scripts", "instalar.mjs");
 const CLAVE = "rz_pub_SECRETO_DE_PRUEBA_123456";
 const PREVIA = "rz_prev_SECRETO_DE_PRUEBA_654321";
 const SDK = "@mlopez-raizell/raizell-sdk";
@@ -170,12 +170,12 @@ test("el manifiesto enumera ficheros que existen, y no se lleva las pruebas", ()
   const manifiesto = leerManifiesto(KIT);
   const rutas = expandir(manifiesto.ficheros, KIT);
   for (const esperado of [
-    "AGENTS.raizell.md",
-    "raizell-kit/CHECKLIST.md",
-    "raizell-kit/scripts/comprobar.mjs",
-    "raizell-kit/scripts/lib/entorno.mjs",
-    "raizell-kit/plantillas/env.local.example",
-    ".claude/skills/raizell-empezar/SKILL.md",
+    "AGENTS.cms.md",
+    "cms-kit/CHECKLIST.md",
+    "cms-kit/scripts/comprobar.mjs",
+    "cms-kit/scripts/lib/entorno.mjs",
+    "cms-kit/plantillas/env.local.example",
+    ".claude/skills/cms-front-empezar/SKILL.md",
   ]) assert.ok(rutas.includes(esperado), `falta ${esperado}`);
   assert.equal(rutas.filter((r) => /\.test\.mjs$/.test(r)).length, 0);
   assert.equal(rutas.filter((r) => /^(README|CHANGELOG|CLAUDE)\.md$/.test(r)).length, 0);
@@ -199,20 +199,20 @@ test("instalar: sin package.json, para y dice qué hacer", (t) => {
 });
 
 test("instalar: deja el proyecto listo y es idempotente", (t) => {
-  const dir = frontVacio(t, { name: "x", scripts: { dev: "next dev", "raizell:estado": "echo mio" } });
+  const dir = frontVacio(t, { name: "x", scripts: { dev: "next dev", "cms:estado": "echo mio" } });
   const r = correr(INSTALADOR, dir);
   assert.equal(r.estado, 0, r.salida);
 
   for (const f of [
-    "AGENTS.raizell.md", "AGENTS.md", "CLAUDE.md", ".npmrc", ".env.local", ".env.local.example",
-    "raizell-kit/CHECKLIST.md", "raizell-kit/scripts/comprobar.mjs", ".claude/skills/raizell-front-nextjs/SKILL.md",
+    "AGENTS.cms.md", "AGENTS.md", "CLAUDE.md", ".npmrc", ".env.local", ".env.local.example",
+    "cms-kit/CHECKLIST.md", "cms-kit/scripts/comprobar.mjs", ".claude/skills/cms-front-nextjs/SKILL.md",
   ]) assert.ok(existsSync(join(dir, f)), `falta ${f}`);
   assert.ok(!existsSync(join(dir, "README.md")), "el README del kit no se instala");
 
   const pkg = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
   assert.equal(pkg.scripts.dev, "next dev");
-  assert.equal(pkg.scripts["raizell:estado"], "echo mio", "un script que ya existía se respeta");
-  assert.equal(pkg.scripts["raizell:comprobar"], "node raizell-kit/scripts/comprobar.mjs");
+  assert.equal(pkg.scripts["cms:estado"], "echo mio", "un script que ya existía se respeta");
+  assert.equal(pkg.scripts["cms:comprobar"], "node cms-kit/scripts/comprobar.mjs");
 
   // Las direcciones llegan puestas; las claves, vacías.
   const delKit = leerManifiesto(KIT).direcciones;
@@ -223,11 +223,11 @@ test("instalar: deja el proyecto listo y es idempotente", (t) => {
 
   const m = leerManifiesto(dir);
   assert.equal(m.instalado.version, leerManifiesto(KIT).version);
-  assert.ok(m.instalado.huellas["raizell-kit/CHECKLIST.md"]);
+  assert.ok(m.instalado.huellas["cms-kit/CHECKLIST.md"]);
 
   const ignore = readFileSync(join(dir, ".gitignore"), "utf8");
   assert.match(ignore, /^\.env\.local$/m);
-  assert.match(ignore, /^\.raizell\/$/m);
+  assert.match(ignore, /^\.cms-kit\/$/m);
   assert.doesNotMatch(readFileSync(join(dir, ".npmrc"), "utf8"), /_authToken/);
 
   const antes = readFileSync(join(dir, ".gitignore"), "utf8") + readFileSync(join(dir, "package.json"), "utf8");
@@ -243,26 +243,26 @@ test("instalar: no pisa nada que ya existiera", (t) => {
   writeFileSync(join(dir, ".npmrc"), "save-exact=true\n");
   writeFileSync(join(dir, ".env.local"), "RAIZELL_API_KEY=la-mia\n");
   writeFileSync(join(dir, ".gitignore"), ".env*\nnode_modules");
-  mkdirSync(join(dir, "raizell-kit"));
-  writeFileSync(join(dir, "raizell-kit", "CHECKLIST.md"), "tocado\n");
+  mkdirSync(join(dir, "cms-kit"));
+  writeFileSync(join(dir, "cms-kit", "CHECKLIST.md"), "tocado\n");
 
   const r = correr(INSTALADOR, dir);
   assert.equal(r.estado, 1, "con pendientes sale en rojo");
   assert.equal(readFileSync(join(dir, "AGENTS.md"), "utf8"), "# Mis reglas\n");
   assert.equal(readFileSync(join(dir, ".npmrc"), "utf8"), "save-exact=true\n");
   assert.equal(readFileSync(join(dir, ".env.local"), "utf8"), "RAIZELL_API_KEY=la-mia\n");
-  assert.equal(readFileSync(join(dir, "raizell-kit", "CHECKLIST.md"), "utf8"), "tocado\n");
+  assert.equal(readFileSync(join(dir, "cms-kit", "CHECKLIST.md"), "utf8"), "tocado\n");
   assert.match(r.salida, /tu AGENTS\.md no remite al kit/);
   assert.match(r.salida, /@mlopez-raizell:registry=/);
   assert.match(r.salida, /CHECKLIST\.md ya existía y es distinto/);
   const ignore = readFileSync(join(dir, ".gitignore"), "utf8");
   assert.doesNotMatch(ignore, /^\.env\.local$/m, "`.env*` ya lo cubría");
-  assert.match(ignore, /node_modules\n\n# Raizell Front Kit: .*\n\.raizell\/\n$/);
+  assert.match(ignore, /node_modules\n\n# CMS Front Kit: .*\n\.cms-kit\/\n$/);
 });
 
 // ── comprobar ───────────────────────────────────────────────────────────────
 
-const comprobar = (dir, args = []) => correr(join(dir, "raizell-kit", "scripts", "comprobar.mjs"), dir, args);
+const comprobar = (dir, args = []) => correr(join(dir, "cms-kit", "scripts", "comprobar.mjs"), dir, args);
 
 test("comprobar: con todo puesto sale en verde y no enseña ninguna clave", (t) => {
   const dir = frontListo(t);
@@ -307,7 +307,7 @@ test("comprobar: clave rechazada — lo dice sin repetirla", (t) => {
 
 test("comprobar: site en construcción — avisa y deja trabajar con la de previsualización", (t) => {
   const dir = frontListo(t);
-  const r = spawnSync(process.execPath, ["raizell-kit/scripts/comprobar.mjs"], {
+  const r = spawnSync(process.execPath, ["cms-kit/scripts/comprobar.mjs"], {
     cwd: dir, encoding: "utf8", env: { ...ENTORNO_LIMPIO, SITE_EN_CONSTRUCCION: "1" },
   });
   assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -339,12 +339,12 @@ test("comprobar: una dirección que no responde manda a actualizar el kit", (t) 
   const r = comprobar(dir);
   assert.equal(r.estado, 1);
   assert.match(r.salida, /✓ la dirección de la API responde/);
-  assert.match(r.salida, /✗ la dirección de los medios no responde[^]*npm run raizell:actualizar/);
+  assert.match(r.salida, /✗ la dirección de los medios no responde[^]*npm run cms:actualizar/);
 });
 
 test("comprobar: una dirección que falta en el entorno se pide con su valor, no a Raizell", (t) => {
   const dir = frontListo(t, { env: entorno({ api: null }) });
-  const f = join(dir, "raizell-front-kit.json");
+  const f = join(dir, "cms-front-kit.json");
   const m = JSON.parse(readFileSync(f, "utf8"));
   writeFileSync(f, JSON.stringify({ ...m, direcciones: { api: `${LOCAL}/`, medios: `${LOCAL}/medios` } }));
   const r = comprobar(dir);
@@ -366,13 +366,13 @@ test("direccion: manda el entorno; si no, la del kit", () => {
 
 // ── descubrir ───────────────────────────────────────────────────────────────
 
-const descubrir = (dir, args = []) => correr(join(dir, "raizell-kit", "scripts", "descubrir.mjs"), dir, args);
+const descubrir = (dir, args = []) => correr(join(dir, "cms-kit", "scripts", "descubrir.mjs"), dir, args);
 
 test("descubrir: vuelca lo que el site tiene, sin conocer su estructura", (t) => {
   const dir = frontListo(t);
   const r = descubrir(dir);
   assert.equal(r.estado, 0, r.salida);
-  const base = join(dir, ".raizell", "descubierto");
+  const base = join(dir, ".cms-kit", "descubierto");
   assert.equal(JSON.parse(readFileSync(join(base, "rutas.json"), "utf8")).length, 4, "2 rutas × 2 idiomas");
   assert.ok(existsSync(join(base, "contenido", "es__raiz.json")));
   assert.ok(existsSync(join(base, "contenido", "en__equipo_direccion.json")));
@@ -386,7 +386,7 @@ test("descubrir: vuelca lo que el site tiene, sin conocer su estructura", (t) =>
   assert.match(resumen, /- `borradores` · boolean · ×1 — p\. ej\. «false»/);
   assert.ok(!resumen.includes(CLAVE) && !r.salida.includes(CLAVE));
 
-  const ignorado = spawnSync("git", ["check-ignore", "-q", ".raizell/descubierto/RESUMEN.md"], { cwd: dir });
+  const ignorado = spawnSync("git", ["check-ignore", "-q", ".cms-kit/descubierto/RESUMEN.md"], { cwd: dir });
   assert.equal(ignorado.status, 0, "lo descubierto tiene que quedar fuera de git");
 });
 
@@ -394,7 +394,7 @@ test("descubrir --previa: pide borradores con la otra clave", (t) => {
   const dir = frontListo(t);
   const r = descubrir(dir, ["--previa", "--max", "1"]);
   assert.equal(r.estado, 0, r.salida);
-  const resumen = readFileSync(join(dir, ".raizell", "descubierto", "RESUMEN.md"), "utf8");
+  const resumen = readFileSync(join(dir, ".cms-kit", "descubierto", "RESUMEN.md"), "utf8");
   assert.match(resumen, /clave de previsualización \(incluye borradores\)/);
   assert.match(resumen, /- `borradores` · boolean · ×1 — p\. ej\. «true»/);
   assert.match(resumen, /solo se ha pedido el contenido de las 1 primeras/);
@@ -406,14 +406,14 @@ test("descubrir: un SDK al que le falta un espacio no lo rompe", (t) => {
   writeFileSync(f, readFileSync(f, "utf8").replace("medios: {", "almacen: {"));
   const r = descubrir(dir);
   assert.equal(r.estado, 0, r.salida);
-  assert.match(readFileSync(join(dir, ".raizell", "descubierto", "RESUMEN.md"), "utf8"), /`medios\.listar\(\)` no existe en esta versión del SDK/);
+  assert.match(readFileSync(join(dir, ".cms-kit", "descubierto", "RESUMEN.md"), "utf8"), /`medios\.listar\(\)` no existe en esta versión del SDK/);
 });
 
 test("descubrir: sin clave, manda a la checklist", (t) => {
   const dir = frontListo(t, { env: entorno({ clave: null, previa: null }) });
   const r = descubrir(dir);
   assert.equal(r.estado, 1);
-  assert.match(r.salida, /Falta RAIZELL_API_KEY.*raizell:comprobar/);
+  assert.match(r.salida, /Falta RAIZELL_API_KEY.*cms:comprobar/);
 });
 
 // ── estado y actualizar ─────────────────────────────────────────────────────
@@ -429,12 +429,12 @@ function kitPublicado(t) {
   const repo = realpathSync(mkdtempSync(join(tmpdir(), "rfk-repo-")));
   t.after(() => rmSync(repo, { recursive: true, force: true }));
   const manifiesto = leerManifiesto(KIT);
-  for (const ruta of [...expandir(manifiesto.ficheros, KIT), "raizell-front-kit.json", "CHANGELOG.md"]) {
+  for (const ruta of [...expandir(manifiesto.ficheros, KIT), "cms-front-kit.json", "CHANGELOG.md"]) {
     mkdirSync(dirname(join(repo, ruta)), { recursive: true });
     cpSync(join(KIT, ruta), join(repo, ruta));
   }
   const escribir = (version) =>
-    writeFileSync(join(repo, "raizell-front-kit.json"), JSON.stringify({ ...manifiesto, version, repositorio: repo }, null, 2) + "\n");
+    writeFileSync(join(repo, "cms-front-kit.json"), JSON.stringify({ ...manifiesto, version, repositorio: repo }, null, 2) + "\n");
 
   git(repo, "init", "-q", "-b", "main");
   escribir("0.1.0");
@@ -443,11 +443,11 @@ function kitPublicado(t) {
   git(repo, "tag", "v0.1.0");
 
   escribir("0.2.0");
-  writeFileSync(join(repo, "raizell-kit", "CHECKLIST.md"), "# CHECKLIST nueva\n");
-  writeFileSync(join(repo, "AGENTS.raizell.md"), "# Reglas nuevas\n");
-  mkdirSync(join(repo, ".claude", "skills", "raizell-nueva"), { recursive: true });
-  writeFileSync(join(repo, ".claude", "skills", "raizell-nueva", "SKILL.md"), "nueva\n");
-  rmSync(join(repo, ".claude", "skills", "raizell-front-nextjs"), { recursive: true });
+  writeFileSync(join(repo, "cms-kit", "CHECKLIST.md"), "# CHECKLIST nueva\n");
+  writeFileSync(join(repo, "AGENTS.cms.md"), "# Reglas nuevas\n");
+  mkdirSync(join(repo, ".claude", "skills", "cms-front-nueva"), { recursive: true });
+  writeFileSync(join(repo, ".claude", "skills", "cms-front-nueva", "SKILL.md"), "nueva\n");
+  rmSync(join(repo, ".claude", "skills", "cms-front-nextjs"), { recursive: true });
   writeFileSync(join(repo, "CHANGELOG.md"), "# CHANGELOG\n\n## v0.2.0 — mañana\n\n- Una skill nueva.\n\n## v0.1.0\n\n- La primera.\n");
   git(repo, "add", "-A");
   git(repo, "commit", "-q", "-m", "v0.2.0");
@@ -463,8 +463,8 @@ test("actualizar: trae lo nuevo, borra lo retirado y no pisa lo tocado", (t) => 
 
   const dir = frontVacio(t);
   git(dir, "init", "-q", "-b", "main");
-  assert.equal(correr(join(origen, "raizell-kit", "scripts", "instalar.mjs"), dir).estado, 0);
-  const kit = (...args) => correr(join(dir, "raizell-kit", "scripts", "kit.mjs"), dir, args);
+  assert.equal(correr(join(origen, "cms-kit", "scripts", "instalar.mjs"), dir).estado, 0);
+  const kit = (...args) => correr(join(dir, "cms-kit", "scripts", "kit.mjs"), dir, args);
 
   const estado = kit("estado");
   assert.match(estado.salida, /Versión instalada: v0\.1\.0/);
@@ -472,8 +472,8 @@ test("actualizar: trae lo nuevo, borra lo retirado y no pisa lo tocado", (t) => 
   assert.match(estado.salida, /Ningún fichero del kit tocado/);
 
   // El proyecto toca un fichero del kit que la versión nueva también cambia.
-  writeFileSync(join(dir, "AGENTS.raizell.md"), "# Tocado en el proyecto\n");
-  assert.match(kit("estado").salida, /modificado {2}AGENTS\.raizell\.md/);
+  writeFileSync(join(dir, "AGENTS.cms.md"), "# Tocado en el proyecto\n");
+  assert.match(kit("estado").salida, /modificado {2}AGENTS\.cms\.md/);
 
   const sucio = kit("actualizar");
   assert.equal(sucio.estado, 1);
@@ -483,19 +483,19 @@ test("actualizar: trae lo nuevo, borra lo retirado y no pisa lo tocado", (t) => 
   git(dir, "commit", "-q", "-m", "instalado");
   const r = kit("actualizar");
   assert.equal(r.estado, 0, r.salida);
-  assert.match(r.salida, /Raizell Front Kit v0\.1\.0 → v0\.2\.0/);
-  assert.match(r.salida, /CONFLICTOS[^]*AGENTS\.raizell\.md/);
+  assert.match(r.salida, /CMS Front Kit v0\.1\.0 → v0\.2\.0/);
+  assert.match(r.salida, /CONFLICTOS[^]*AGENTS\.cms\.md/);
   assert.match(r.salida, /## v0\.2\.0 — mañana/);
   assert.doesNotMatch(r.salida, /La primera/);
 
-  assert.equal(readFileSync(join(dir, "AGENTS.raizell.md"), "utf8"), "# Tocado en el proyecto\n", "lo tocado no se pisa");
-  assert.equal(readFileSync(join(dir, "raizell-kit", "CHECKLIST.md"), "utf8"), "# CHECKLIST nueva\n");
-  assert.ok(existsSync(join(dir, ".claude", "skills", "raizell-nueva", "SKILL.md")));
-  assert.ok(!existsSync(join(dir, ".claude", "skills", "raizell-front-nextjs")), "lo retirado se borra");
+  assert.equal(readFileSync(join(dir, "AGENTS.cms.md"), "utf8"), "# Tocado en el proyecto\n", "lo tocado no se pisa");
+  assert.equal(readFileSync(join(dir, "cms-kit", "CHECKLIST.md"), "utf8"), "# CHECKLIST nueva\n");
+  assert.ok(existsSync(join(dir, ".claude", "skills", "cms-front-nueva", "SKILL.md")));
+  assert.ok(!existsSync(join(dir, ".claude", "skills", "cms-front-nextjs")), "lo retirado se borra");
   assert.equal(leerManifiesto(dir).instalado.version, "0.2.0");
 
   git(dir, "add", "-A");
   git(dir, "commit", "-q", "-m", "kit 0.2.0");
-  assert.match(kit("estado").salida, /v0\.2\.0 — estás al día[^]*modificado {2}AGENTS\.raizell\.md/);
+  assert.match(kit("estado").salida, /v0\.2\.0 — estás al día[^]*modificado {2}AGENTS\.cms\.md/);
   assert.match(kit("actualizar").salida, /Ya tienes v0\.2\.0/);
 });

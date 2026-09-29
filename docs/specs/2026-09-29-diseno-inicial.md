@@ -1,4 +1,4 @@
-# Diseño inicial — Raizell Front Kit
+# Diseño inicial — CMS Front Kit
 
 Fecha: 2026-09-29 · Versión que describe: v0.1.0 · Estado: aprobado
 
@@ -16,7 +16,7 @@ comprobar que lo tiene**, y que su agente de IA trabaje con las mismas reglas.
 | Audiencia | Desarrolladores externos | — |
 | Tecnología | Núcleo genérico sobre el SDK y una skill específica de Next.js | Solo Next.js: cierra la puerta a otras. Cualquiera: guías demasiado vagas. |
 | Idioma | Español | — |
-| Nombre | `raizell-front-kit` | — |
+| Nombre | `cms-front-kit` | — |
 | Contacto | No se publica ninguno | Los desarrolladores ya saben a quién dirigirse |
 
 ## Quién pone cada cosa
@@ -30,9 +30,9 @@ Corrección de Miguel tras la primera entrega (2026-09-29):
 | Claves del site | Raizell |
 | Direcciones de la API y de los medios | El kit las trae puestas: cambian muy poco. `comprobar` verifica que siguen respondiendo. |
 
-Las direcciones viven en `raizell-front-kit.json` (`direcciones`), que es el
+Las direcciones viven en `cms-front-kit.json` (`direcciones`), que es el
 único sitio donde se cambian; un cambio llega a los fronts con
-`raizell:actualizar`.
+`cms:actualizar`.
 
 ## Restricción central: agnóstico de versión
 
@@ -44,7 +44,7 @@ sobre el SDK. Enseña el método para consultar las dos que sí lo son.
 
 | Verdad | Fuente | Mecanismo |
 |---|---|---|
-| Qué tiene el site | El propio site | `raizell:descubrir` recorre las respuestas sin conocer su forma |
+| Qué tiene el site | El propio site | `cms:descubrir` recorre las respuestas sin conocer su forma |
 | Qué funciones hay | El SDK instalado | Las skills remiten a su README y a sus tipos |
 
 Consecuencias en el código:
@@ -65,10 +65,10 @@ genéricos:
 
 | Lo del kit | Dónde vive |
 |---|---|
-| Reglas | `AGENTS.raizell.md` (no `AGENTS.md`) |
-| Scripts, checklist y plantillas | `raizell-kit/` |
-| Skills | `.claude/skills/raizell-*/` |
-| Comandos | `raizell:*` en `package.json` |
+| Reglas | `AGENTS.cms.md` (no `AGENTS.md`) |
+| Scripts, checklist y plantillas | `cms-kit/` |
+| Skills | `.claude/skills/cms-front-*/` |
+| Comandos | `cms:*` en `package.json` |
 
 `AGENTS.md`, `CLAUDE.md`, `.npmrc`, `.env.local.example` y `.env.local` son
 del proyecto: se crean solo si no existen. Si existen, el instalador dice qué
@@ -95,7 +95,7 @@ Solo módulos nativos de Node: el kit no añade dependencias al proyecto.
 |---|---|
 | Seguridad | Ningún script imprime valores de claves; los mensajes de error se limpian antes de mostrarse. `comprobar` detecta claves en variables `NEXT_PUBLIC_`, tokens escritos en el `.npmrc` del proyecto y un `.env.local` sin ignorar. |
 | Fallos | Cada punto en rojo dice qué falta y a qué punto de la checklist ir. Un método ausente en el SDK no detiene `descubrir`. |
-| Pruebas | `node --test raizell-kit/scripts/*.test.mjs`: monta fronts temporales con un SDK simulado y ejecuta los scripts reales. |
+| Pruebas | `node --test cms-kit/scripts/*.test.mjs`: monta fronts temporales con un SDK simulado y ejecuta los scripts reales. |
 
 ## Fuera de alcance en v0.1.0
 

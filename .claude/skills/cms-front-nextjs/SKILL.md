@@ -1,5 +1,5 @@
 ---
-name: raizell-front-nextjs
+name: cms-front-nextjs
 description: Úsala al escribir en Next.js el código que lee del CMS de Raizell — crear el cliente del SDK, páginas y rutas dinámicas, menús, imágenes, texto enriquecido, previsualización de borradores o gestión de errores. Dispara con "conecta con el CMS", "crea el cliente", "generateStaticParams", "pinta las imágenes", "texto enriquecido", "previsualización", "modo borrador", "ver cómo queda", "la clave sale en el navegador".
 ---
 
@@ -8,7 +8,7 @@ description: Úsala al escribir en Next.js el código que lee del CMS de Raizell
 Aquí están las **decisiones** que no cambian de una versión a otra. Los
 nombres exactos de las funciones, sus parámetros y sus tipos se miran en el
 SDK instalado (su README y sus `.d.ts`), y el contenido, con la skill
-`raizell-descubrir-contenido`.
+`cms-front-descubrir-contenido`.
 
 ## Reglas duras
 
@@ -69,7 +69,7 @@ La previsualización de borradores no se cachea nunca.
 | «Es una clave de solo lectura, da igual que se vea» | Con ella cualquiera consume la cuota del site en su nombre. Y la de previsualización abre los borradores. |
 | «Solo para este componente de cliente» | Una vez en el bundle, está publicada. |
 | «Monto la URL de la imagen a mano, es concatenar» | Hasta que cambie el dominio de medios o los tamaños. |
-| «No paso la dirección de la API, el SDK ya trae una» | Puede no ser la vigente: fallará la conexión aunque `raizell:comprobar` esté en verde. |
+| «No paso la dirección de la API, el SDK ya trae una» | Puede no ser la vigente: fallará la conexión aunque `cms:comprobar` esté en verde. |
 | «Convierto el texto a HTML y lo inyecto» | Si hace falta, con el atajo del SDK; nunca con una conversión propia. |
 | «Hago mi propia previsualización, es un parámetro» | Es el punto por donde se filtra la clave que abre todos los borradores. |
 

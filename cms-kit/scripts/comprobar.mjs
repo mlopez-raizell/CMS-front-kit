@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // COMPROBAR LA CHECKLIST
 //
-// Recorre `raizell-kit/CHECKLIST.md` punto por punto y dice qué tienes, qué te
+// Recorre `cms-kit/CHECKLIST.md` punto por punto y dice qué tienes, qué te
 // falta y cómo conseguirlo. Termina con una llamada real al site: es lo único
 // que demuestra que todo funciona junto.
 //
@@ -9,11 +9,11 @@
 //
 // No sabe nada de la estructura del contenido ni de la versión del CMS: lo
 // que comprueba es que puedes hablar con tu site. Qué hay dentro lo dice
-// `npm run raizell:descubrir`.
+// `npm run cms:descubrir`.
 //
 // Uso (desde la raíz del front):
-//   npm run raizell:comprobar
-//   npm run raizell:comprobar -- --sin-red    (no consulta el registro ni el site)
+//   npm run cms:comprobar
+//   npm run cms:comprobar -- --sin-red    (no consulta el registro ni el site)
 //
 // Sale con 1 si falta algo imprescindible.
 
@@ -236,7 +236,7 @@ async function direcciones(entorno, manifiesto) {
       falta(
         `la dirección de ${etiqueta} no responde`,
         "Revisa tu conexión. Si sigue sin responder, puede haber cambiado: trae la vigente con\n" +
-          "npm run raizell:actualizar — y si el kit ya está al día, avisa a Raizell.",
+          "npm run cms:actualizar — y si el kit ya está al día, avisa a Raizell.",
       );
     }
   }
@@ -291,7 +291,7 @@ async function site(manifiesto, entorno, sdkInstalado) {
   if (typeof modulo.createClient !== "function") {
     return aviso(
       "este SDK no se inicia como el kit espera",
-      "Mira el README del SDK instalado y actualiza el kit: npm run raizell:actualizar",
+      "Mira el README del SDK instalado y actualiza el kit: npm run cms:actualizar",
     );
   }
 
@@ -337,7 +337,7 @@ const MARCA = { ok: "✓", aviso: "!", falta: "✗", omitido: "·" };
 
 function informe() {
   console.log("\n──────────────────────────────────────────────");
-  console.log(" Raizell Front Kit — comprobación de la checklist");
+  console.log(" CMS Front Kit — comprobación de la checklist");
   console.log("──────────────────────────────────────────────");
   for (const s of secciones) {
     console.log(`\n${s.titulo}`);
@@ -351,18 +351,18 @@ function informe() {
   const avisos = todas.filter((l) => l.estado === "aviso").length;
   console.log("");
   if (faltan > 0) {
-    console.log(`Te falta${faltan === 1 ? "" : "n"} ${faltan} cosa${faltan === 1 ? "" : "s"} para empezar. El detalle de cada una, en raizell-kit/CHECKLIST.md.`);
+    console.log(`Te falta${faltan === 1 ? "" : "n"} ${faltan} cosa${faltan === 1 ? "" : "s"} para empezar. El detalle de cada una, en cms-kit/CHECKLIST.md.`);
     return 1;
   }
   console.log(avisos > 0 ? `Puedes empezar, con ${avisos} aviso${avisos === 1 ? "" : "s"} a la vista.` : "Todo listo.");
-  console.log("Siguiente paso: npm run raizell:descubrir");
+  console.log("Siguiente paso: npm run cms:descubrir");
   console.log("Los puntos 8 y 9 de la checklist (diseño y despliegue) no se pueden comprobar desde aquí.");
   return 0;
 }
 
 const manifiesto = leerManifiesto(RAIZ);
 if (!manifiesto?.sdk?.paquete) {
-  console.error("✗ Falta raizell-front-kit.json en esta carpeta: ejecuta esto desde la raíz del front, con el kit instalado.");
+  console.error("✗ Falta cms-front-kit.json en esta carpeta: ejecuta esto desde la raíz del front, con el kit instalado.");
   process.exit(1);
 }
 

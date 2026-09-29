@@ -1,7 +1,7 @@
-# AGENTS.raizell.md — Raizell Front Kit
+# AGENTS.cms.md — CMS Front Kit
 
 > Reglas para construir un front que consume el CMS de Raizell. Este fichero
-> es del kit: **no se edita** (se actualiza con `npm run raizell:actualizar`).
+> es del kit: **no se edita** (se actualiza con `npm run cms:actualizar`).
 > Lo propio del proyecto va en `AGENTS.md`.
 
 ## 1 · De dónde sale la verdad
@@ -11,9 +11,9 @@ Las dos cosas cambian, y una copia escrita aquí estaría desfasada.
 
 | Pregunta | Dónde se mira | Cómo |
 |---|---|---|
-| ¿Qué páginas, bloques, campos, idiomas y módulos hay? | El propio site | `npm run raizell:descubrir` → `.raizell/descubierto/RESUMEN.md` |
+| ¿Qué páginas, bloques, campos, idiomas y módulos hay? | El propio site | `npm run cms:descubrir` → `.cms-kit/descubierto/RESUMEN.md` |
 | ¿Qué funciones hay, qué reciben y qué devuelven? | El SDK instalado | Su README y sus tipos, en `node_modules` |
-| ¿Qué me falta para poder trabajar? | La checklist | `npm run raizell:comprobar` |
+| ¿Qué me falta para poder trabajar? | La checklist | `npm run cms:comprobar` |
 
 🔴 **Nunca se supone la estructura del contenido**: ni de memoria, ni por
 otro proyecto, ni por un ejemplo. Se descubre.
@@ -34,24 +34,24 @@ otro proyecto, ni por un ejemplo. Se descubre.
 
 | Skill | Cuándo salta |
 |---|---|
-| `raizell-empezar` | Al empezar un front, al instalar el kit, o cuando no instala el SDK o no conecta con el site |
-| `raizell-descubrir-contenido` | Antes de escribir cualquier cosa que pinte contenido del CMS |
-| `raizell-front-nextjs` | Al escribir en Next.js el código que lee del CMS: páginas, rutas, imágenes, previsualización |
-| `raizell-registrar-aprendizaje` | Cuando se aprende algo que el siguiente desarrollador debería saber |
+| `cms-front-empezar` | Al empezar un front, al instalar el kit, o cuando no instala el SDK o no conecta con el site |
+| `cms-front-descubrir-contenido` | Antes de escribir cualquier cosa que pinte contenido del CMS |
+| `cms-front-nextjs` | Al escribir en Next.js el código que lee del CMS: páginas, rutas, imágenes, previsualización |
+| `cms-front-registrar-aprendizaje` | Cuando se aprende algo que el siguiente desarrollador debería saber |
 
 ## 4 · Comandos
 
 | Comando | Qué hace |
 |---|---|
-| `npm run raizell:comprobar` | Recorre la checklist y dice qué falta y cómo conseguirlo |
-| `npm run raizell:descubrir` | Pregunta al site qué tiene y lo deja en `.raizell/descubierto/` |
-| `npm run raizell:estado` | Versión del kit instalada y ficheros del kit tocados |
-| `npm run raizell:actualizar` | Trae la última versión del kit sin pisar lo tocado |
+| `npm run cms:comprobar` | Recorre la checklist y dice qué falta y cómo conseguirlo |
+| `npm run cms:descubrir` | Pregunta al site qué tiene y lo deja en `.cms-kit/descubierto/` |
+| `npm run cms:estado` | Versión del kit instalada y ficheros del kit tocados |
+| `npm run cms:actualizar` | Trae la última versión del kit sin pisar lo tocado |
 
 ## 5 · Qué hace un agente cuando falta algo
 
-Si `raizell:comprobar` marca un punto en rojo, el agente **no lo rodea**: no
+Si `cms:comprobar` marca un punto en rojo, el agente **no lo rodea**: no
 inventa datos de ejemplo para seguir, no copia claves de otro proyecto y no
 desactiva la comprobación. Le dice a la persona qué punto de
-`raizell-kit/CHECKLIST.md` falta y a quién se lo tiene que pedir, y sigue con
+`cms-kit/CHECKLIST.md` falta y a quién se lo tiene que pedir, y sigue con
 lo que no dependa de ello.

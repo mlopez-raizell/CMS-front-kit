@@ -1,5 +1,5 @@
 ---
-name: raizell-registrar-aprendizaje
+name: cms-front-registrar-aprendizaje
 description: Úsala cuando, construyendo un front para el CMS de Raizell, se aprende algo que el siguiente desarrollador debería saber, o cuando hay que decidir si algo merece una skill. Dispara con "esto habría que apuntarlo", "que no se nos olvide", "añade una skill", "crea una skill", "esto debería estar en el kit", "nos ha vuelto a pasar", "documenta esto".
 ---
 
@@ -9,7 +9,7 @@ description: Úsala cuando, construyendo un front para el CMS de Raizell, se apr
 
 | Lo que tienes | Dónde va |
 |---|---|
-| Un **dato** de este site: una ruta, un campo, un tipo de bloque | **En ningún sitio.** Se regenera con `npm run raizell:descubrir` |
+| Un **dato** de este site: una ruta, un campo, un tipo de bloque | **En ningún sitio.** Se regenera con `npm run cms:descubrir` |
 | Una **decisión de este proyecto**: carpetas, estilos, hosting | `AGENTS.md` del proyecto |
 | Un **criterio que se repite** en este proyecto y en el que un agente se equivoca | Skill **propia** del proyecto |
 | Un criterio que valdría para **cualquier front** de Raizell | Propuesta al kit (paso 4) |
@@ -33,7 +33,7 @@ Si lo que ibas a escribir está en la columna izquierda, no es una skill.
 ## Paso 3 — escribir una skill propia
 
 - Vive en `.claude/skills/<nombre>/SKILL.md`, versionada con el proyecto.
-- Nombre en `kebab-case`, sin acentos, y **sin el prefijo `raizell-`**: ese
+- Nombre en `kebab-case`, sin acentos, y **sin el prefijo `cms-front-`**: ese
   prefijo es del kit, y una actualización podría pisarla.
 - La **descripción dice cuándo se usa**, con las frases literales que diría la
   persona. No resume lo que la skill hace por dentro.
@@ -46,12 +46,12 @@ salió de un problema real diluye lo que sí.
 
 ## Paso 4 — proponerlo al kit
 
-Las skills `raizell-*` y el resto de ficheros del kit **no se editan en el
-proyecto**: `npm run raizell:estado` los marcaría como tocados y dejarían de
+Las skills `cms-front-*` y el resto de ficheros del kit **no se editan en el
+proyecto**: `npm run cms:estado` los marcaría como tocados y dejarían de
 actualizarse.
 
 Lo que valga para cualquier front se propone en el repositorio del kit (está
-en `raizell-front-kit.json`), contando **qué falló**, en qué situación y qué
+en `cms-front-kit.json`), contando **qué falló**, en qué situación y qué
 lo habría evitado. Mientras se publica, puede vivir como skill propia.
 
 ## Señales de alarma

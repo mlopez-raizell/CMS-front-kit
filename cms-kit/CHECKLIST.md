@@ -4,7 +4,7 @@ Nueve cosas. Hasta que no tengas las siete primeras no puedes pintar ni una
 página; las dos últimas no te impiden arrancar, pero te pararán más tarde.
 
 ```bash
-npm run raizell:comprobar
+npm run cms:comprobar
 ```
 
 Ese comando recorre los puntos 1 a 7 y te dice cuáles tienes. Nunca enseña el
@@ -83,7 +83,7 @@ pierde no se puede recuperar; se revoca y se emite otra.
 **Dónde va.** En `.env.local`, en la variable que indica
 `.env.local.example`.
 
-**Cómo se comprueba.** `npm run raizell:comprobar` recibe respuesta del site.
+**Cómo se comprueba.** `npm run cms:comprobar` recibe respuesta del site.
 
 ## 5 · La clave de previsualización del site
 
@@ -114,14 +114,14 @@ secretas.
 **Cómo se usan.** Tu front se las pasa al SDK al crear el cliente, **las
 dos**. No cuentes con la dirección que el SDK traiga por defecto.
 
-**Cómo se comprueba.** `npm run raizell:comprobar` llama a las dos y te dice
+**Cómo se comprueba.** `npm run cms:comprobar` llama a las dos y te dice
 si siguen respondiendo.
 
 **Si una deja de responder.** Cambian muy de tarde en tarde. Cuando ocurra,
 la vigente llega con una versión nueva del kit:
 
 ```bash
-npm run raizell:actualizar
+npm run cms:actualizar
 ```
 
 Después, copia la nueva de `.env.local.example` a tu `.env.local` y a las
@@ -140,7 +140,7 @@ publicado y la de previsualización añade los borradores.
 **Cómo se consigue.** Pregunta a Raizell en qué estado está el tuyo y cuándo
 está previsto activarlo.
 
-**Cómo se comprueba.** `npm run raizell:comprobar` prueba las dos claves y te
+**Cómo se comprueba.** `npm run cms:comprobar` prueba las dos claves y te
 dice cuál responde.
 
 > Si vas a desarrollar contra un site en construcción, tu entorno local
@@ -158,7 +158,7 @@ viva en el CMS.
 tiene de verdad:
 
 ```bash
-npm run raizell:descubrir
+npm run cms:descubrir
 ```
 
 Si el diseño pinta algo que el site no devuelve, o al revés, se resuelve
@@ -185,7 +185,7 @@ cada versión del CMS, así que ningún documento lo puede tener al día. Se le
 pregunta al propio site:
 
 ```bash
-npm run raizell:descubrir
+npm run cms:descubrir
 ```
 
 **Qué funciones tiene el SDK.** Lo dice el paquete que tienes instalado, en

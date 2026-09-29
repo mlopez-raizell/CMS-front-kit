@@ -3,7 +3,7 @@
 //
 // El kit no documenta la estructura del contenido: cambia con cada site y con
 // cada versión del CMS. En su lugar, esto le PREGUNTA al site y deja la
-// respuesta en `.raizell/descubierto/` (fuera de git):
+// respuesta en `.cms-kit/descubierto/` (fuera de git):
 //
 //   RESUMEN.md        lo que hay, para leer: idiomas, módulos, rutas y la
 //                     forma de los datos de cada una
@@ -16,9 +16,9 @@
 // en tu versión del SDK o el site no tiene ese módulo, lo anota y sigue.
 //
 // Uso (desde la raíz del front):
-//   npm run raizell:descubrir
-//   npm run raizell:descubrir -- --previa       (clave de previsualización, con borradores)
-//   npm run raizell:descubrir -- --max 20       (tope de rutas cuyo contenido se pide; 50 por defecto)
+//   npm run cms:descubrir
+//   npm run cms:descubrir -- --previa       (clave de previsualización, con borradores)
+//   npm run cms:descubrir -- --max 20       (tope de rutas cuyo contenido se pide; 50 por defecto)
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -27,7 +27,7 @@ import { VARIABLES, cargarSdk, codigoDe, direccion, entornoDe, rellena, sinSecre
 import { forma, formaEnLineas, superficie } from "./lib/forma.mjs";
 
 const RAIZ = process.cwd();
-const SALIDA = join(RAIZ, ".raizell", "descubierto");
+const SALIDA = join(RAIZ, ".cms-kit", "descubierto");
 const args = process.argv.slice(2);
 const PREVIA = args.includes("--previa");
 const iMax = args.indexOf("--max");
@@ -39,22 +39,22 @@ function parar(mensaje) {
 }
 
 const manifiesto = leerManifiesto(RAIZ);
-if (!manifiesto?.sdk?.paquete) parar("Falta raizell-front-kit.json: ejecuta esto desde la raíz del front, con el kit instalado.");
+if (!manifiesto?.sdk?.paquete) parar("Falta cms-front-kit.json: ejecuta esto desde la raíz del front, con el kit instalado.");
 
 const entorno = entornoDe(RAIZ);
 const nombreDeClave = PREVIA ? VARIABLES.clavePrevia : VARIABLES.clave;
 if (!rellena(entorno, nombreDeClave)) {
-  parar(`Falta ${nombreDeClave}. Pasa antes la checklist: npm run raizell:comprobar`);
+  parar(`Falta ${nombreDeClave}. Pasa antes la checklist: npm run cms:comprobar`);
 }
 
 let modulo, sdk;
 try {
   ({ modulo, sdk } = await cargarSdk(RAIZ, manifiesto));
 } catch (e) {
-  parar(`${e.message}. Pasa antes la checklist: npm run raizell:comprobar`);
+  parar(`${e.message}. Pasa antes la checklist: npm run cms:comprobar`);
 }
 if (typeof modulo.createClient !== "function") {
-  parar("Este SDK no se inicia como el kit espera. Mira su README y actualiza el kit: npm run raizell:actualizar");
+  parar("Este SDK no se inicia como el kit espera. Mira su README y actualiza el kit: npm run cms:actualizar");
 }
 
 const cliente = modulo.createClient({
@@ -102,8 +102,8 @@ if (config === undefined) {
   parar(
     `El site no contesta. ${notas.at(-1) ?? ""}\n` +
       (enConstruccion
-        ? "  Si está en construcción, solo responde a la clave de previsualización: npm run raizell:descubrir -- --previa"
-        : "  Pasa la checklist para ver qué falla: npm run raizell:comprobar"),
+        ? "  Si está en construcción, solo responde a la clave de previsualización: npm run cms:descubrir -- --previa"
+        : "  Pasa la checklist para ver qué falla: npm run cms:comprobar"),
   );
 }
 guardar("config.json", config);
@@ -147,7 +147,7 @@ if (medios !== undefined) guardar("medios.json", medios);
 const s = superficie(cliente);
 const md = [];
 md.push("# Lo que tiene este site", "");
-md.push(`> Generado por \`npm run raizell:descubrir\` el ${new Date().toISOString().slice(0, 10)}, con la clave ${PREVIA ? "de previsualización (incluye borradores)" : "pública (solo publicado)"}.`);
+md.push(`> Generado por \`npm run cms:descubrir\` el ${new Date().toISOString().slice(0, 10)}, con la clave ${PREVIA ? "de previsualización (incluye borradores)" : "pública (solo publicado)"}.`);
 md.push("> Es una foto: si el contenido o el SDK cambian, vuelve a generarla. No se versiona.", "");
 
 md.push("## SDK instalado", "", `\`${sdk.nombre}\` ${sdk.version ?? ""}`.trim(), "");
@@ -189,4 +189,4 @@ writeFileSync(join(SALIDA, "RESUMEN.md"), md.join("\n"));
 
 console.log(`Site consultado: ${rutas.length} ruta(s), ${contenidos.length} con su contenido${Array.isArray(medios) ? `, ${medios.length} medio(s)` : ""}.`);
 if (notas.length) console.log(`${notas.length} cosa(s) no se pudieron consultar: están al final del resumen.`);
-console.log("Léelo en: .raizell/descubierto/RESUMEN.md");
+console.log("Léelo en: .cms-kit/descubierto/RESUMEN.md");

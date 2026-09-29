@@ -7,16 +7,16 @@
 //   1. Comprueba que ya hay un proyecto (package.json). Si no, para y dice qué
 //      hacer antes.
 //   2. Copia los ficheros del kit. NO pisa ninguno que ya exista y sea distinto.
-//   3. Registra en `raizell-front-kit.json` la versión instalada y la huella de
+//   3. Registra en `cms-front-kit.json` la versión instalada y la huella de
 //      cada fichero, para poder actualizar sin pisar lo que toques.
-//   4. Añade los scripts `raizell:*` a package.json. NO pisa los que ya tengas.
+//   4. Añade los scripts `cms:*` a package.json. NO pisa los que ya tengas.
 //   5. Crea lo que falte del proyecto: `.npmrc`, `.env.local.example`,
 //      `.env.local` (con las direcciones ya puestas y las claves vacías),
 //      `AGENTS.md` y `CLAUDE.md`. Ninguno se sobrescribe.
-//   6. Se asegura de que `.env.local` y `.raizell/` están en `.gitignore`.
+//   6. Se asegura de que `.env.local` y `.cms-kit/` están en `.gitignore`.
 //
 // NO instala el SDK ni pide credenciales: eso es la checklist, y la recorre
-// `npm run raizell:comprobar`.
+// `npm run cms:comprobar`.
 //
 // Es idempotente: correrlo dos veces no cambia nada la segunda.
 
@@ -28,20 +28,20 @@ import { VARIABLES, habitual, lineaDeRegistro } from "./lib/entorno.mjs";
 
 const ORIGEN = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
 const DESTINO = process.cwd();
-const PLANTILLAS = join(ORIGEN, "raizell-kit", "plantillas");
-const REFERENCIA = "AGENTS.raizell.md";
+const PLANTILLAS = join(ORIGEN, "cms-kit", "plantillas");
+const REFERENCIA = "AGENTS.cms.md";
 
 const SCRIPTS = {
-  "raizell:comprobar": "node raizell-kit/scripts/comprobar.mjs",
-  "raizell:descubrir": "node raizell-kit/scripts/descubrir.mjs",
-  "raizell:estado": "node raizell-kit/scripts/kit.mjs estado",
-  "raizell:actualizar": "node raizell-kit/scripts/kit.mjs actualizar",
-  "raizell:instalar": "node raizell-kit/scripts/instalar.mjs",
+  "cms:comprobar": "node cms-kit/scripts/comprobar.mjs",
+  "cms:descubrir": "node cms-kit/scripts/descubrir.mjs",
+  "cms:estado": "node cms-kit/scripts/kit.mjs estado",
+  "cms:actualizar": "node cms-kit/scripts/kit.mjs actualizar",
+  "cms:instalar": "node cms-kit/scripts/instalar.mjs",
 };
 
 const IGNORAR = [
   [".env.local", "las claves del site"],
-  [".raizell/", "lo que vuelca raizell:descubrir"],
+  [".cms-kit/", "lo que vuelca cms:descubrir"],
 ];
 
 const hechos = [];
@@ -97,7 +97,7 @@ if (ORIGEN !== DESTINO) {
 
   const previo = leerManifiesto(DESTINO);
   if (previo?.instalado) {
-    yaEstaban.push(`${MANIFIESTO} ya registraba la v${previo.instalado.version} — para cambiar de versión: npm run raizell:actualizar`);
+    yaEstaban.push(`${MANIFIESTO} ya registraba la v${previo.instalado.version} — para cambiar de versión: npm run cms:actualizar`);
   } else {
     escribirManifiesto(DESTINO, { ...origen, instalado: { version: origen.version, huellas } });
     hechos.push(`registrada la v${origen.version} del kit en ${MANIFIESTO}`);
@@ -118,7 +118,7 @@ for (const [nombre, orden] of Object.entries(SCRIPTS)) {
 }
 if (nuevos > 0) {
   writeFileSync(PKG, JSON.stringify(pkg, null, 2) + "\n");
-  hechos.push(`${nuevos} script(s) raizell:* añadidos a package.json`);
+  hechos.push(`${nuevos} script(s) cms:* añadidos a package.json`);
 }
 
 // ── 5. Lo que falte del proyecto ────────────────────────────────────────────
@@ -192,7 +192,7 @@ const leer = (f) => (existsSync(f) ? readFileSync(f, "utf8") : null);
     (patron === ".env.local" && lineas.some((l) => [".env*", ".env*.local", ".env.*"].includes(l)));
   const faltan = IGNORAR.filter(([patron]) => !cubre(patron));
   if (faltan.length > 0) {
-    const bloque = faltan.map(([patron, por]) => `# Raizell Front Kit: ${por}\n${patron}`).join("\n");
+    const bloque = faltan.map(([patron, por]) => `# CMS Front Kit: ${por}\n${patron}`).join("\n");
     appendFileSync(f, `${existsSync(f) && !(leer(f) ?? "").endsWith("\n") ? "\n" : ""}\n${bloque}\n`);
     hechos.push(`.gitignore: añadido ${faltan.map(([p]) => p).join(" y ")}`);
   }
@@ -202,7 +202,7 @@ const leer = (f) => (existsSync(f) ? readFileSync(f, "utf8") : null);
 const linea = (s) => console.log(s);
 linea("");
 linea("──────────────────────────────────────────");
-linea(` Raizell Front Kit v${manifiesto.instalado?.version ?? manifiesto.version} — instalación`);
+linea(` CMS Front Kit v${manifiesto.instalado?.version ?? manifiesto.version} — instalación`);
 linea("──────────────────────────────────────────");
 
 if (hechos.length === 0) linea("\nNada que hacer: ya estaba todo puesto.");
@@ -220,6 +220,6 @@ if (pendientes.length > 0) {
 }
 
 linea("");
-linea("Siguiente paso: lee raizell-kit/CHECKLIST.md y ejecuta");
-linea("    npm run raizell:comprobar");
+linea("Siguiente paso: lee cms-kit/CHECKLIST.md y ejecuta");
+linea("    npm run cms:comprobar");
 process.exit(pendientes.length > 0 ? 1 : 0);

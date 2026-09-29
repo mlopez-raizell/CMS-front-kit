@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // VERSIÓN DEL KIT EN ESTE PROYECTO
 //
-// `raizell-front-kit.json` registra qué versión del kit tiene el proyecto y la
+// `cms-front-kit.json` registra qué versión del kit tiene el proyecto y la
 // huella de cada fichero tal y como llegó. Comparando huellas se sabe qué ha
 // tocado el proyecto — y eso NUNCA se pisa.
 //
 // Uso (desde la raíz del front):
-//   npm run raizell:estado
-//   npm run raizell:actualizar              (la última publicada)
-//   npm run raizell:actualizar -- v0.2.0    (una concreta)
+//   npm run cms:estado
+//   npm run cms:actualizar              (la última publicada)
+//   npm run cms:actualizar -- v0.2.0    (una concreta)
 //
 // Solo módulos nativos de Node; git por execFileSync.
 
@@ -22,7 +22,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MANIFIESTO, escribirManifiesto, expandir, huella, leerManifiesto } from "./lib/manifiesto.mjs";
 
-const INSTALADOR = "raizell-kit/scripts/instalar.mjs";
+const INSTALADOR = "cms-kit/scripts/instalar.mjs";
 
 class Parada extends Error {}
 
@@ -49,7 +49,7 @@ function ultimaVersion(repositorio) {
 }
 
 function clonar(repositorio, tag) {
-  const dir = mkdtempSync(join(tmpdir(), "raizell-front-kit-"));
+  const dir = mkdtempSync(join(tmpdir(), "cms-front-kit-"));
   try {
     execFileSync(
       "git",
@@ -111,7 +111,7 @@ function estado(raiz) {
     const ultima = ultimaVersion(m.repositorio);
     if (!ultima) console.log(`Última publicada:  (ningún tag vX.Y.Z en ${m.repositorio})`);
     else {
-      const aviso = comparar(ultima, `v${m.instalado.version}`) > 0 ? " — actualiza con: npm run raizell:actualizar" : " — estás al día";
+      const aviso = comparar(ultima, `v${m.instalado.version}`) > 0 ? " — actualiza con: npm run cms:actualizar" : " — estás al día";
       console.log(`Última publicada:  ${ultima}${aviso}`);
     }
   } catch {
@@ -223,7 +223,7 @@ function actualizar(raiz, pedida) {
       // La versión nueva de los conflictos se guarda FUERA del proyecto para
       // poder compararla: el clon se borra siempre y el árbol no se ensucia.
       if (r.conflictos.length > 0) {
-        copiaConflictos = mkdtempSync(join(tmpdir(), `raizell-front-kit-${tag}-conflictos-`));
+        copiaConflictos = mkdtempSync(join(tmpdir(), `cms-front-kit-${tag}-conflictos-`));
         for (const ruta of r.conflictos) copiar(join(tmp, ruta), join(copiaConflictos, ruta));
       }
 
@@ -244,7 +244,7 @@ function actualizar(raiz, pedida) {
       ? tramoChangelog(readFileSync(join(tmp, "CHANGELOG.md"), "utf8"), desde, tag)
       : "";
     if (cambios) console.log(`\nQué cambia (CHANGELOG ${desde} → ${tag}):\n\n${cambios}`);
-    console.log(`\nRevisa el diff y haz tú el commit:\n    git add -A && git commit -m "chore(raizell-front-kit): ${desde} → ${tag}"`);
+    console.log(`\nRevisa el diff y haz tú el commit:\n    git add -A && git commit -m "chore(cms-front-kit): ${desde} → ${tag}"`);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -256,7 +256,7 @@ function informe(r, { desde, tag, copiaConflictos }) {
     console.log(`\n${titulo} (${rutas.length}):`);
     for (const x of rutas) console.log(`  ${fmt(x)}`);
   };
-  console.log(`Raizell Front Kit ${desde} → ${tag}`);
+  console.log(`CMS Front Kit ${desde} → ${tag}`);
   lista("Actualizados", r.actualizados);
   lista("Añadidos", r.anadidos);
   lista("Retirados del kit y borrados", r.borrados);
@@ -278,7 +278,7 @@ function informe(r, { desde, tag, copiaConflictos }) {
 // ejecuta: no se sabe qué hace.
 function ejecutarInstalador(raiz, r) {
   if (r.conflictos.includes(INSTALADOR) || r.tocados.includes(INSTALADOR)) {
-    console.log(`\n${INSTALADOR} está tocado en el proyecto: no se ha ejecutado. Intégralo y ejecuta: npm run raizell:instalar`);
+    console.log(`\n${INSTALADOR} está tocado en el proyecto: no se ha ejecutado. Intégralo y ejecuta: npm run cms:instalar`);
     return;
   }
   if (!existsSync(join(raiz, INSTALADOR))) return;
@@ -293,7 +293,7 @@ function main(argv) {
   const raiz = process.cwd();
   if (orden === "estado") return estado(raiz);
   if (orden === "actualizar") return actualizar(raiz, resto.find((x) => !x.startsWith("--")));
-  throw new Parada("Uso: node raizell-kit/scripts/kit.mjs estado | actualizar [vX.Y.Z]");
+  throw new Parada("Uso: node cms-kit/scripts/kit.mjs estado | actualizar [vX.Y.Z]");
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
