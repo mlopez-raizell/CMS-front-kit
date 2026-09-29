@@ -1,0 +1,25 @@
+{
+  "nombre": "raizell-front-kit",
+  "version": "0.1.0",
+  "repositorio": "https://github.com/mlopez-raizell/CMS-front-kit.git",
+  "sdk": {
+    "paquete": "@mlopez-raizell/raizell-sdk",
+    "registro": "https://npm.pkg.github.com"
+  },
+  "direcciones": {
+    "api": "https://apicms.raizell.com",
+    "medios": "https://mrkbhppzvdhqxzaorpja.supabase.co/storage/v1/object/public/medios"
+  },
+  "ficheros": [
+    "AGENTS.raizell.md",
+    "raizell-front-kit.json",
+    "raizell-kit/CHECKLIST.md",
+    "raizell-kit/scripts/instalar.mjs",
+    "raizell-kit/scripts/kit.mjs",
+    "raizell-kit/scripts/comprobar.mjs",
+    "raizell-kit/scripts/descubrir.mjs",
+    "raizell-kit/scripts/lib/**",
+    "raizell-kit/plantillas/**",
+    ".claude/skills/raizell-*/**"
+  ]
+}
