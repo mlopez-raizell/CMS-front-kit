@@ -14,6 +14,7 @@ agente de IA— desde el primer día.
 | No sabes qué necesitas para empezar ni a quién pedírselo | Una [checklist](cms-kit/CHECKLIST.md) de nueve puntos, cada uno con cómo se consigue |
 | Pierdes horas depurando lo que era una clave que faltaba | `cms:comprobar`, que recorre la checklist y prueba la conexión real |
 | No sabes qué páginas y campos tiene el site | `cms:descubrir`, que se lo pregunta al propio site |
+| Llegas a producción y descubres que la clave pública nunca se había probado | `cms:comprobar -- --produccion` y la skill de puesta en producción |
 | Tu agente de IA se inventa la estructura del contenido | Skills que le obligan a descubrirla antes de escribir |
 | Una clave acaba en el navegador o en el repositorio | Reglas duras y comprobaciones que lo detectan |
 
@@ -70,7 +71,8 @@ npm run cms:comprobar
 | Comando | Qué hace |
 |---|---|
 | `npm run cms:comprobar` | Recorre la checklist y dice qué falta y cómo conseguirlo |
-| `npm run cms:descubrir` | Pregunta al site qué tiene y lo deja en `.cms-kit/descubierto/` |
+| `npm run cms:comprobar -- --produccion` | Antes de salir a producción: exige la clave pública y que el site responda a ella |
+| `npm run cms:descubrir` | Pregunta al site qué tiene y lo deja en `.cms-kit/descubierto/`. Con `-- --menu <identificador>` consulta un menú, que el SDK no puede listar |
 | `npm run cms:estado` | Versión instalada, última publicada y ficheros del kit tocados |
 | `npm run cms:actualizar` | Trae la última versión sin pisar lo que hayas tocado |
 
@@ -81,6 +83,8 @@ npm run cms:comprobar
 | `cms-front-empezar` | Al empezar, o cuando no instala el SDK o no conecta con el site |
 | `cms-front-descubrir-contenido` | Antes de escribir cualquier cosa que pinte contenido del CMS |
 | `cms-front-nextjs` | Al escribir en Next.js el código que lee del CMS |
+| `cms-front-astro` | Al escribir en Astro el código que lee del CMS |
+| `cms-front-produccion` | Al llevar el front a producción, o cuando funciona en local y falla en el hosting |
 | `cms-front-registrar-aprendizaje` | Cuando se aprende algo que el siguiente debería saber |
 
 Funcionan con Claude Code directamente. Con otras herramientas,
