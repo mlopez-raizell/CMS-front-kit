@@ -24,7 +24,7 @@ import { appendFileSync, chmodSync, copyFileSync, existsSync, mkdirSync, readFil
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MANIFIESTO, escribirManifiesto, expandir, huella, leerManifiesto } from "./lib/manifiesto.mjs";
-import { VARIABLES, habitual, lineaDeRegistro } from "./lib/entorno.mjs";
+import { VARIABLES, entornoDe, habitual, lineaDeRegistro, rellena } from "./lib/entorno.mjs";
 
 const ORIGEN = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
 const DESTINO = process.cwd();
@@ -61,7 +61,7 @@ if (!existsSync(PKG)) {
 ✗ Aquí todavía no hay un proyecto: falta package.json.
 
   El kit se instala ENCIMA de un front que ya existe. Crea primero el
-  proyecto (por ejemplo: npx create-next-app@latest) y vuelve a ejecutar el
+  proyecto con el framework que vayas a usar (Next.js, Astro…) y vuelve a ejecutar el
   instalador desde su raíz.
 `);
   process.exit(1);
@@ -157,8 +157,23 @@ const leer = (f) => (existsSync(f) ? readFileSync(f, "utf8") : null);
   const local = join(DESTINO, ".env.local");
   if (existsSync(local)) yaEstaban.push(".env.local — no se toca");
   else {
+    // Los frameworks leen .env.local por encima de .env, y una variable vacía
+    // gana: la que el proyecto ya tiene con valor se deja comentada para no taparla.
+    const previas = entornoDe(DESTINO, {});
+    const comentadas = [];
+    for (const nombre of Object.values(VARIABLES)) {
+      if (!rellena(previas, nombre)) continue;
+      const linea = new RegExp(`^(${nombre}=.*)$`, "m");
+      if (linea.test(plantilla)) {
+        plantilla = plantilla.replace(linea, "# $1");
+        comentadas.push(nombre);
+      }
+    }
     writeFileSync(local, plantilla);
     hechos.push("creado .env.local con las direcciones puestas — las claves las rellenas tú, a mano");
+    if (comentadas.length > 0) {
+      hechos.push(`${comentadas.join(", ")} ya tenían valor en .env: quedan comentadas en .env.local para que no lo tapen`);
+    }
   }
 }
 

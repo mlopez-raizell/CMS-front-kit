@@ -52,6 +52,17 @@ export function entornoDe(raiz, proceso = process.env) {
   return salida;
 }
 
+/**
+ * Prefijos con los que los frameworks publican una variable en el navegador de
+ * cada visitante. Una clave que viva en una variable con uno de ellos está
+ * publicada.
+ */
+export const PREFIJOS_PUBLICOS = ["NEXT_PUBLIC_", "PUBLIC_", "VITE_", "NUXT_PUBLIC_", "REACT_APP_", "GATSBY_", "EXPO_PUBLIC_"];
+
+export const esPublica = (nombre) => PREFIJOS_PUBLICOS.some((p) => String(nombre).startsWith(p));
+
+const FICHEROS_DE_ENTORNO = [".env", ".env.local"]; // de menos a más prioridad
+
 const tieneValor = (v) => typeof v === "string" && v.trim() !== "" && !/^<.*>$/.test(v.trim());
 /** ¿La variable tiene un valor de verdad (ni vacía ni el marcador `<...>` de la plantilla)? */
 export function rellena(entorno, nombre) {
@@ -135,6 +146,28 @@ export async function cargarSdk(raiz, manifiesto) {
   const fichero = join(sdk.dir, entrada);
   if (!existsSync(fichero)) throw new Error(`el SDK instalado no trae su entrada (${entrada}): reinstálalo`);
   return { modulo: await import(pathToFileURL(fichero).href), sdk };
+}
+
+/**
+ * Variables del kit que están VACÍAS en un fichero que manda y con valor en
+ * otro que manda menos. Los frameworks leen `.env.local` por encima de `.env`
+ * y una variable definida pero vacía gana: la clave está puesta y es como si
+ * no lo estuviera.
+ */
+export function variablesTapadas(raiz, nombres = Object.values(VARIABLES)) {
+  const porFichero = FICHEROS_DE_ENTORNO.map((f) => {
+    const ruta = join(raiz, f);
+    return { f, valores: existsSync(ruta) ? leerEnv(readFileSync(ruta, "utf8")) : {} };
+  });
+  const tapadas = [];
+  for (const nombre of nombres) {
+    const definen = porFichero.filter(({ valores }) => nombre in valores);
+    const manda = definen.at(-1);
+    if (!manda || rellena(manda.valores, nombre)) continue;
+    const conValor = definen.slice(0, -1).findLast(({ valores }) => rellena(valores, nombre));
+    if (conValor) tapadas.push({ nombre, vacioEn: manda.f, conValorEn: conValor.f });
+  }
+  return tapadas;
 }
 
 /** Quita de un texto cualquier valor secreto del entorno, por si un error lo arrastra. */
