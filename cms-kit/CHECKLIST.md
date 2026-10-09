@@ -8,14 +8,15 @@ npm run cms:comprobar
 ```
 
 Ese comando recorre los puntos 1 a 7 y te dice cuáles tienes. Nunca enseña el
-valor de una clave: solo si está o no.
+valor de una clave: solo si está o no. Antes de salir a producción, con la
+clave pública como requisito: `npm run cms:comprobar -- --produccion`.
 
 | # | Qué | Quién lo pone | Bloquea |
 |---|---|---|---|
 | 1 | Node.js, gestor de paquetes y git | Tú | Todo |
 | 2 | Tu cuenta de GitHub y el repositorio del front | Tú | Guardar y desplegar tu trabajo |
 | 3 | El token para descargar el SDK | Raizell | Instalar el SDK |
-| 4 | La clave pública del site | Raizell | Leer contenido |
+| 4 | La clave pública del site | Raizell | Producción (para desarrollar basta la de previsualización) |
 | 5 | La clave de previsualización del site | Raizell | Borradores y sites en construcción |
 | 6 | Las direcciones de la API y de los medios | El kit las trae puestas | Conexión e imágenes |
 | 7 | Saber en qué estado está el site | Raizell | Entender qué clave responde |
@@ -61,7 +62,10 @@ descargarlo hace falta un token que solo permite **leer paquetes**.
 
 **Dónde va.** En el `.npmrc` de tu carpeta de usuario (`~/.npmrc`), nunca en
 el del proyecto. La línea exacta la indica el README del SDK. En el hosting y
-en la integración continua va como variable de entorno secreta.
+en la integración continua va como variable de entorno secreta, **marcada
+para todos los entornos que construyan** (vista previa y producción): si solo
+está en uno, el otro falla al instalar con «authentication token not provided».
+Ver la skill `cms-front-produccion`.
 
 **Cómo se comprueba.** El SDK se instala sin error de autenticación.
 
@@ -85,6 +89,9 @@ pierde no se puede recuperar; se revoca y se emite otra.
 
 **Cómo se comprueba.** `npm run cms:comprobar` recibe respuesta del site.
 
+> Es la clave que usan los visitantes en producción, y la única que lee solo
+> lo publicado. Pruébala **antes de salir**: `npm run cms:comprobar -- --produccion`.
+
 ## 5 · La clave de previsualización del site
 
 **Qué es.** Como la anterior, pero lee también los **borradores**. La
@@ -97,7 +104,8 @@ de publicarlo, y trabajar mientras el site está en construcción (punto 7).
 
 > 🔴 Esta clave abre todo lo que el cliente todavía no ha publicado. Vive
 > solo en el servidor. **Nunca** en una URL, en código que llegue al
-> navegador ni en una variable que empiece por `NEXT_PUBLIC_`.
+> navegador ni en una variable con prefijo público del framework
+> (`NEXT_PUBLIC_`, `PUBLIC_`, `VITE_`…).
 
 ## 6 · Las direcciones de la API y de los medios
 
@@ -144,7 +152,12 @@ está previsto activarlo.
 dice cuál responde.
 
 > Si vas a desarrollar contra un site en construcción, tu entorno local
-> necesita la clave de previsualización desde el primer día.
+> necesita la clave de previsualización desde el primer día. Con solo esa,
+> `cms:comprobar` te deja empezar y te avisa de que falta la pública.
+>
+> 🔴 **Para salir a producción el site tiene que estar activo**: pide a Raizell
+> la fecha con tiempo. Con el site en construcción, la clave pública no
+> obtiene respuesta y los visitantes no verían nada.
 
 ## 8 · El diseño y los materiales
 
@@ -174,7 +187,20 @@ el SDK al construir.
 repositorio (punto 2). Confirma con Raizell si las claves de **producción**
 (puntos 4 y 5) son las mismas con las que has desarrollado.
 
-**Cómo se comprueba.** Un despliegue de prueba construye y pinta contenido.
+**Qué variable va en qué entorno.** Una variable que solo existe en uno de los
+entornos del hosting no la ve el otro:
+
+| Variable | Vista previa | Producción |
+|---|---|---|
+| Token para instalar el SDK (punto 3) | ✓ | ✓ |
+| Clave pública (punto 4) | Opcional | ✓ |
+| Clave de previsualización (punto 5) | ✓ | ✓ si hay «Ver cómo queda» |
+| Direcciones (punto 6) | ✓ | ✓ |
+| Un interruptor de borradores del proyecto, si lo hay | ✓ | **❌ nunca** |
+
+**Cómo se comprueba.** `npm run cms:comprobar -- --produccion` en verde y un
+despliegue de prueba que construye y pinta contenido. Todo el recorrido, con
+las trampas que ya han ocurrido, está en la skill `cms-front-produccion`.
 
 ---
 

@@ -13,7 +13,9 @@
 //
 // Uso (desde la raíz del front):
 //   npm run cms:comprobar
-//   npm run cms:comprobar -- --sin-red    (no consulta el registro ni el site)
+//   npm run cms:comprobar -- --sin-red       (no consulta el registro ni el site)
+//   npm run cms:comprobar -- --produccion    (antes de salir a producción: exige la clave
+//                                             pública y que el site responda a ella)
 //
 // Sale con 1 si falta algo imprescindible.
 
@@ -22,12 +24,13 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { leerManifiesto } from "./lib/manifiesto.mjs";
 import {
-  VARIABLES, cargarSdk, codigoDe, direccion, entornoDe, gestorDe, habitual, leerEnv, lineaDeRegistro,
-  localizarSdk, rellena, sinSecretos,
+  VARIABLES, cargarSdk, codigoDe, direccion, entornoDe, esPublica, gestorDe, habitual, leerEnv, lineaDeRegistro,
+  localizarSdk, rellena, sinSecretos, variablesTapadas,
 } from "./lib/entorno.mjs";
 
 const RAIZ = process.cwd();
 const SIN_RED = process.argv.includes("--sin-red");
+const PRODUCCION = process.argv.includes("--produccion");
 const NODE_MINIMO = 20;
 
 const secciones = [];
@@ -162,10 +165,33 @@ function claves(entorno) {
     else falta(".env.local NO está ignorado por git", "Añade `.env.local` a .gitignore antes de hacer ningún commit");
   }
 
-  if (rellena(entorno, VARIABLES.clave)) ok(`${VARIABLES.clave} tiene valor`);
-  else falta(`falta ${VARIABLES.clave}`, "CHECKLIST 4 — la clave pública del site la emite Raizell. Se enseña una sola vez.");
+  // Una variable definida pero vacía en .env.local gana a la que tiene valor en
+  // .env: la clave "está puesta" y es como si no lo estuviera.
+  const tapadas = new Map(variablesTapadas(RAIZ).map((v) => [v.nombre, v]));
+  const explicarTapada = (nombre) => {
+    const t = tapadas.get(nombre);
+    falta(
+      `${nombre} está vacía en ${t.vacioEn} y tapa la de ${t.conValorEn}`,
+      "Los frameworks leen .env.local por encima de .env, y una variable vacía gana.\n" +
+        "Borra o comenta esa línea de .env.local, o pon ahí el valor.",
+    );
+  };
 
-  if (rellena(entorno, VARIABLES.clavePrevia)) ok(`${VARIABLES.clavePrevia} tiene valor`);
+  const hayPrevia = rellena(entorno, VARIABLES.clavePrevia);
+  if (rellena(entorno, VARIABLES.clave)) ok(`${VARIABLES.clave} tiene valor`);
+  else if (tapadas.has(VARIABLES.clave)) explicarTapada(VARIABLES.clave);
+  else if (hayPrevia && !PRODUCCION) {
+    aviso(
+      `falta ${VARIABLES.clave}`,
+      "CHECKLIST 4 — con la de previsualización puedes desarrollar, pero no ves lo que verá el visitante (solo lo publicado).\n" +
+        "Pídela a Raizell y pruébala antes de salir a producción: npm run cms:comprobar -- --produccion",
+    );
+  } else {
+    falta(`falta ${VARIABLES.clave}`, "CHECKLIST 4 — la clave pública del site la emite Raizell. Se enseña una sola vez.");
+  }
+
+  if (hayPrevia) ok(`${VARIABLES.clavePrevia} tiene valor`);
+  else if (tapadas.has(VARIABLES.clavePrevia)) explicarTapada(VARIABLES.clavePrevia);
   else {
     aviso(
       `falta ${VARIABLES.clavePrevia}`,
@@ -173,15 +199,15 @@ function claves(entorno) {
     );
   }
 
-  // Una clave en una variable NEXT_PUBLIC_ viaja al navegador de cada visitante.
+  // Una clave en una variable con prefijo público (NEXT_PUBLIC_, PUBLIC_, VITE_…) viaja al navegador de cada visitante.
   const ficheros = [".env", ".env.local"].filter((f) => existsSync(join(RAIZ, f)));
   const enFicheros = Object.assign({}, ...ficheros.map((f) => leerEnv(readFileSync(join(RAIZ, f), "utf8"))));
   const claves = [VARIABLES.clave, VARIABLES.clavePrevia].filter((n) => rellena(entorno, n)).map((n) => entorno[n]);
   const expuestas = Object.entries(enFicheros)
-    .filter(([n, v]) => n.startsWith("NEXT_PUBLIC_") && claves.includes(v))
+    .filter(([n, v]) => esPublica(n) && claves.includes(v))
     .map(([n]) => n);
   for (const n of expuestas) {
-    falta(`${n} contiene una clave de API`, "Todo lo que empieza por NEXT_PUBLIC_ llega al navegador. Quítala de ahí y pide a Raizell que la revoque.");
+    falta(`${n} contiene una clave de API`, "Una variable con prefijo público (NEXT_PUBLIC_, PUBLIC_, VITE_…) llega al navegador de cada visitante.\nQuítala de ahí y pide a Raizell que la revoque.");
   }
 }
 
@@ -319,6 +345,18 @@ async function site(manifiesto, entorno, sdkInstalado) {
 
   const publica = respuestas[VARIABLES.clave];
   const previa = respuestas[VARIABLES.clavePrevia];
+  if (PRODUCCION) {
+    // Los visitantes solo ven lo que la clave pública puede leer: si el site no
+    // le responde, la web saldría vacía, aunque con la de previsualización sí.
+    if (publica === "sitio_no_disponible") {
+      falta(
+        "el site no responde a la clave pública (sitio_no_disponible)",
+        "CHECKLIST 7 — sigue en construcción o está suspendido: Raizell tiene que activarlo antes de salir a producción.\n" +
+          "Mientras tanto los visitantes no verían nada.",
+      );
+    }
+    return;
+  }
   if (publica === "sitio_no_disponible" && previa === true) {
     aviso(
       "el site todavía no responde a la clave pública",
@@ -337,7 +375,7 @@ const MARCA = { ok: "✓", aviso: "!", falta: "✗", omitido: "·" };
 
 function informe() {
   console.log("\n──────────────────────────────────────────────");
-  console.log(" CMS Front Kit — comprobación de la checklist");
+  console.log(` CMS Front Kit — comprobación de la checklist${PRODUCCION ? " (producción)" : ""}`);
   console.log("──────────────────────────────────────────────");
   for (const s of secciones) {
     console.log(`\n${s.titulo}`);
@@ -353,6 +391,12 @@ function informe() {
   if (faltan > 0) {
     console.log(`Te falta${faltan === 1 ? "" : "n"} ${faltan} cosa${faltan === 1 ? "" : "s"} para empezar. El detalle de cada una, en cms-kit/CHECKLIST.md.`);
     return 1;
+  }
+  if (PRODUCCION) {
+    console.log(avisos > 0 ? `La clave pública funciona, con ${avisos} aviso${avisos === 1 ? "" : "s"} a la vista.` : "La clave pública funciona.");
+    console.log("Esto solo prueba lo que ve el visitante. Lo demás de salir a producción —variables del hosting,");
+    console.log("caché, redirecciones, sitemap, vuelta atrás— está en la skill cms-front-produccion.");
+    return 0;
   }
   console.log(avisos > 0 ? `Puedes empezar, con ${avisos} aviso${avisos === 1 ? "" : "s"} a la vista.` : "Todo listo.");
   console.log("Siguiente paso: npm run cms:descubrir");

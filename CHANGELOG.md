@@ -15,6 +15,49 @@ cualquiera de ellas.
 En un proyecto: `npm run cms:estado` para ver la versión instalada y
 `npm run cms:actualizar` para traer la última.
 
+## v0.2.0 — 2026-10-08
+
+### Qué trae
+
+- **Skill `cms-front-produccion`**: el recorrido para llevar un front a
+  producción —qué cambia respecto a desarrollo, el orden de salida, las
+  variables del hosting entorno por entorno, cómo instalar el SDK privado en
+  el hosting y distinguir «el token vale» de «el token llega», el límite de
+  peticiones por clave y la caché, sitemap, redirecciones y 404, vuelta atrás
+  y qué comprobar después—.
+- **Skill `cms-front-astro`**: las reglas duras de `cms-front-nextjs`
+  traducidas a Astro (islas, `PUBLIC_`, salida en servidor, ruta genérica,
+  cabeceras y middleware, adaptador y versión de Node).
+- **`cms:comprobar -- --produccion`**: antes de salir, exige la clave pública
+  y que el site responda a ella.
+- **`cms:comprobar` explica una variable vacía que tapa a otra**: los
+  frameworks leen `.env.local` por encima de `.env` y una variable vacía
+  gana, así que una clave puesta en `.env` parecía no existir.
+- **`cms:comprobar` reconoce los prefijos públicos de más frameworks**
+  (`NEXT_PUBLIC_`, `PUBLIC_`, `VITE_`, `NUXT_PUBLIC_`, `REACT_APP_`,
+  `GATSBY_`, `EXPO_PUBLIC_`) al buscar una clave publicada por error.
+- **`cms:descubrir` usa la clave de previsualización si es la única** que hay
+  y lo dice, y **`-- --menu <identificador>`** consulta menús, que el SDK no
+  puede listar.
+- **El instalador no deja variables vacías que tapen** las que el proyecto ya
+  tiene en `.env`: las deja comentadas en `.env.local`.
+- **Checklist (puntos 3, 4, 5, 7 y 9) y reglas duras** con lo aprendido: el
+  token en todos los entornos que construyen, el site activo para producción,
+  qué variable va en qué entorno y que el interruptor de borradores no existe
+  en producción.
+
+### Cambia
+
+- Con solo la clave de previsualización, la falta de la pública es ahora un
+  **aviso** y `cms:comprobar` sale en verde. Con `--produccion` sigue siendo
+  obligatoria.
+
+### Al actualizar
+
+`npm run cms:actualizar`. No hay que tocar nada del proyecto. Si
+`cms:comprobar` dice que una variable «está vacía en .env.local y tapa la de
+.env», borra o comenta esa línea de `.env.local`.
+
 ## v0.1.0 — 2026-09-29
 
 ### Qué trae

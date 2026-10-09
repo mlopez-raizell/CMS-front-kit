@@ -26,6 +26,7 @@ la checklist sin resolver. Se comprueba antes, no se depura después.
    persona, no bloquean.
 5. **Descubre el site**: `npm run cms:descubrir`. A partir de aquí manda
    la skill `cms-front-descubrir-contenido`.
+6. **Cuando llegue el momento de publicar**, manda la skill `cms-front-produccion`.
 
 ## Credenciales: lo que un agente no hace
 
@@ -47,9 +48,13 @@ la checklist sin resolver. Se comprueba antes, no se depura después.
 | No hay dónde subir el trabajo | 2 — falta el repositorio en la cuenta del desarrollador |
 | El site rechaza la clave | 4 o 5 — mal copiada, revocada, o de otro entorno |
 | El site no está disponible con la clave pública | 7 — está en construcción: se trabaja con la de previsualización |
+| `cms:comprobar` avisa de que falta la clave pública, y hay de previsualización | 4 — es un aviso: puedes desarrollar; la necesitarás para producción |
+| `cms:comprobar` dice «está vacía en .env.local y tapa la de .env» | Borra o comenta esa línea de `.env.local`: los frameworks leen ese fichero por encima y una variable vacía gana |
 | Las imágenes no se pueden componer | 6 — falta la dirección de medios en `.env.local`: está en `.env.local.example` |
 | Una dirección no responde | 6 — `npm run cms:actualizar` trae la vigente |
-| En local funciona y en el hosting no | 9 — faltan variables o el token en el hosting |
+| El build del hosting da `401` y «authentication token not provided» | 3 y 9 — el token no llega a **ese entorno** del hosting: skill `cms-front-produccion` |
+| En local funciona y en el hosting no | 9 — faltan variables en ese entorno, o el token: skill `cms-front-produccion` |
+| El build pasa y el despliegue se rechaza («invalid runtime») | 9 — la versión de Node del proyecto: skill `cms-front-produccion` |
 
 ## Racionalizaciones
 

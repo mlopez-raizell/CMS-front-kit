@@ -18,14 +18,19 @@ no vale para este.
 ## El recorrido
 
 1. **Pregunta**: `npm run cms:descubrir`
-   (con `-- --previa` si el site está en construcción o quieres ver borradores).
+   (con `-- --previa` si quieres ver borradores. Si el site está en construcción y
+   solo tienes la clave de previsualización, la usa él solo y lo dice).
 2. **Lee** `.cms-kit/descubierto/RESUMEN.md`: idiomas, módulos, rutas y, por
    cada ruta, qué propiedades llegan, de qué tipo y con qué ejemplo.
 3. **Si necesitas el detalle**, abre la respuesta completa de esa ruta en
    `.cms-kit/descubierto/contenido/`.
-4. **Para los tipos**, usa los que exporta el SDK instalado. No declares a
+4. **Los menús no se pueden listar**: el SDK los pide por su identificador.
+   Pregunta a quien edite el site cómo se llaman y consúltalos con
+   `npm run cms:descubrir -- --menu <identificador>` (varios, separados por
+   comas). Un menú que no existe y uno sin publicar responden igual: nada.
+5. **Para los tipos**, usa los que exporta el SDK instalado. No declares a
    mano una forma que el paquete ya tipa.
-5. **Escribe el código** contra lo que has visto.
+6. **Escribe el código** contra lo que has visto.
 
 `.cms-kit/` no se versiona: es una foto de un momento, y puede llevar
 borradores.

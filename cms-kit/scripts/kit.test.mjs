@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { direccion, habitual, leerEnv, lineaDeRegistro, localizarSdk, rellena, sinSecretos } from "./lib/entorno.mjs";
+import { direccion, entornoDe, esPublica, habitual, leerEnv, lineaDeRegistro, localizarSdk, rellena, sinSecretos, variablesTapadas } from "./lib/entorno.mjs";
 import { forma, formaEnLineas, superficie } from "./lib/forma.mjs";
 import { expandir, leerManifiesto } from "./lib/manifiesto.mjs";
 import { comparar, tramoChangelog } from "./kit.mjs";
@@ -498,4 +498,130 @@ test("actualizar: trae lo nuevo, borra lo retirado y no pisa lo tocado", (t) => 
   git(dir, "commit", "-q", "-m", "kit 0.2.0");
   assert.match(kit("estado").salida, /v0\.2\.0 — estás al día[^]*modificado {2}AGENTS\.cms\.md/);
   assert.match(kit("actualizar").salida, /Ya tienes v0\.2\.0/);
+});
+
+// ── Lo aprendido al poner un front en producción ────────────────────────────
+
+test("esPublica: reconoce los prefijos con los que los frameworks publican una variable", () => {
+  for (const n of ["NEXT_PUBLIC_X", "PUBLIC_X", "VITE_X", "NUXT_PUBLIC_X", "REACT_APP_X", "GATSBY_X", "EXPO_PUBLIC_X"]) {
+    assert.ok(esPublica(n), n);
+  }
+  for (const n of ["RAIZELL_API_KEY", "PUBLICIDAD", "MI_PUBLIC_X", "VITEX"]) assert.ok(!esPublica(n), n);
+});
+
+test("variablesTapadas: una vacía en el fichero que manda tapa la del que manda menos", (t) => {
+  const dir = frontVacio(t);
+  writeFileSync(join(dir, ".env"), "RAIZELL_API_KEY=abc\nRAIZELL_API_URL=http://x\nRAIZELL_PREVIEW_KEY=\n");
+  writeFileSync(join(dir, ".env.local"), "RAIZELL_API_KEY=\nRAIZELL_PREVIEW_KEY=\nRAIZELL_API_URL=http://y\n");
+  assert.deepEqual(variablesTapadas(dir), [{ nombre: "RAIZELL_API_KEY", vacioEn: ".env.local", conValorEn: ".env" }]);
+  assert.equal(entornoDe(dir, {}).RAIZELL_API_KEY, "", "así lo lee el framework: gana la vacía");
+  assert.deepEqual(variablesTapadas(frontVacio(t)), [], "sin ficheros no hay nada tapado");
+});
+
+test("comprobar: una clave vacía en .env.local que tapa la de .env se explica, no se confunde con que falte", (t) => {
+  const dir = frontListo(t, { env: "RAIZELL_API_KEY=\n" + entorno({ clave: null }) });
+  writeFileSync(join(dir, ".env"), `RAIZELL_API_KEY=${CLAVE}\n`);
+  const r = comprobar(dir);
+  assert.equal(r.estado, 1);
+  assert.match(r.salida, /✗ RAIZELL_API_KEY está vacía en \.env\.local y tapa la de \.env/);
+  assert.doesNotMatch(r.salida, /falta RAIZELL_API_KEY/);
+  assert.ok(!r.salida.includes(CLAVE));
+});
+
+test("comprobar: una clave en una variable de las que el framework publica es un fallo, sea cual sea el framework", (t) => {
+  const dir = frontListo(t, {
+    env: entorno({ previa: null, extra: `PUBLIC_KEY=${CLAVE}\nVITE_KEY=${CLAVE}\nNEXT_PUBLIC_KEY=${CLAVE}` }),
+  });
+  const r = comprobar(dir);
+  assert.equal(r.estado, 1);
+  for (const n of ["PUBLIC_KEY", "VITE_KEY", "NEXT_PUBLIC_KEY"]) assert.match(r.salida, new RegExp(`${n} contiene una clave de API`));
+  assert.ok(!r.salida.includes(CLAVE));
+});
+
+test("comprobar: con la clave de previsualización se puede empezar; la pública es un aviso", (t) => {
+  const dir = frontListo(t, { env: entorno({ clave: null }) });
+  const r = comprobar(dir);
+  assert.equal(r.estado, 0, r.salida);
+  assert.match(r.salida, /! falta RAIZELL_API_KEY/);
+  assert.match(r.salida, /--produccion/);
+  assert.doesNotMatch(r.salida, /✗/);
+  assert.match(r.salida, /responde a la clave de previsualización/);
+});
+
+test("comprobar --produccion: exige la clave pública y que el site responda a ella", (t) => {
+  const sinPublica = frontListo(t, { env: entorno({ clave: null }) });
+  const r1 = comprobar(sinPublica, ["--produccion"]);
+  assert.equal(r1.estado, 1);
+  assert.match(r1.salida, /✗ falta RAIZELL_API_KEY/);
+
+  const dir = frontListo(t);
+  const r2 = spawnSync(process.execPath, ["cms-kit/scripts/comprobar.mjs", "--produccion"], {
+    cwd: dir, encoding: "utf8", env: { ...ENTORNO_LIMPIO, SITE_EN_CONSTRUCCION: "1" },
+  });
+  assert.equal(r2.status, 1, r2.stdout);
+  assert.match(r2.stdout, /✗ el site no responde a la clave pública \(sitio_no_disponible\)/);
+  assert.match(r2.stdout, /activ/);
+
+  const r3 = comprobar(dir, ["--produccion"]);
+  assert.equal(r3.estado, 0, r3.salida);
+  assert.match(r3.salida, /responde a la clave pública/);
+  assert.match(r3.salida, /cms-front-produccion/);
+  assert.ok(!r3.salida.includes(CLAVE));
+});
+
+test("instalar: no deja en .env.local una variable vacía que tape la que el proyecto ya tiene en .env", (t) => {
+  const dir = frontVacio(t);
+  writeFileSync(join(dir, ".env"), `RAIZELL_API_KEY=${CLAVE}\nRAIZELL_API_URL=http://propia.test\n`);
+  const r = correr(INSTALADOR, dir);
+  assert.equal(r.estado, 0, r.salida);
+  const local = readFileSync(join(dir, ".env.local"), "utf8");
+  assert.match(local, /^# RAIZELL_API_KEY=$/m);
+  assert.match(local, /^# RAIZELL_API_URL=/m);
+  assert.deepEqual(leerEnv(local), { RAIZELL_PREVIEW_KEY: "", MEDIA_BASE_URL: leerManifiesto(KIT).direcciones.medios });
+  assert.match(r.salida, /ya tenían valor en \.env/);
+  assert.equal(entornoDe(dir, {}).RAIZELL_API_KEY, CLAVE, "la del .env sigue mandando");
+  assert.equal(entornoDe(dir, {}).RAIZELL_API_URL, "http://propia.test");
+  assert.deepEqual(variablesTapadas(dir), []);
+  assert.match(readFileSync(join(dir, ".env.local.example"), "utf8"), /^RAIZELL_API_KEY=$/m, "el ejemplo no se toca");
+});
+
+test("descubrir: sin clave pública pero con la de previsualización, usa esa y lo dice", (t) => {
+  const dir = frontListo(t, { env: entorno({ clave: null }) });
+  const r = descubrir(dir, ["--max", "1"]);
+  assert.equal(r.estado, 0, r.salida);
+  assert.match(r.salida, /Falta RAIZELL_API_KEY: se usa la de previsualización/);
+  const resumen = readFileSync(join(dir, ".cms-kit", "descubierto", "RESUMEN.md"), "utf8");
+  assert.match(resumen, /clave de previsualización \(incluye borradores\)/);
+});
+
+test("descubrir --menu: consulta los menús por su identificador, existan o no", (t) => {
+  const dir = frontListo(t);
+  const f = join(dir, "node_modules", ...SDK.split("/"), "index.js");
+  writeFileSync(
+    f,
+    readFileSync(f, "utf8").replace(
+      "async estaActivo() { return true; },",
+      'async estaActivo() { return true; }, async menu(slug) { return slug === "principal" ? { slug, nombre: "Principal", entradas: [{ tipo: "pagina", etiqueta: "Inicio", url: "/" }] } : null; },',
+    ),
+  );
+  const sin = descubrir(dir, ["--max", "1"]);
+  assert.equal(sin.estado, 0, sin.salida);
+  assert.match(readFileSync(join(dir, ".cms-kit", "descubierto", "RESUMEN.md"), "utf8"), /Los menús no se pueden listar[^]*--menu/);
+
+  const r = descubrir(dir, ["--max", "1", "--menu", "principal,pie"]);
+  assert.equal(r.estado, 0, r.salida);
+  const base = join(dir, ".cms-kit", "descubierto");
+  assert.equal(JSON.parse(readFileSync(join(base, "menus", "principal.json"), "utf8")).nombre, "Principal");
+  const resumen = readFileSync(join(base, "RESUMEN.md"), "utf8");
+  assert.match(resumen, /## Menús/);
+  assert.match(resumen, /### `principal`/);
+  assert.match(resumen, /- `entradas\[\]\.etiqueta` · string · ×1 — p\. ej\. «Inicio»/);
+  assert.match(resumen, /`pie`: no existe o no está publicado/);
+});
+
+test("descubrir --menu: un SDK sin ese método lo anota y sigue", (t) => {
+  const dir = frontListo(t);
+  const r = descubrir(dir, ["--max", "1", "--menu", "principal"]);
+  assert.equal(r.estado, 0, r.salida);
+  assert.match(readFileSync(join(dir, ".cms-kit", "descubierto", "RESUMEN.md"), "utf8"), /`cms\.menu\(principal\)` no existe en esta versión del SDK/);
 });

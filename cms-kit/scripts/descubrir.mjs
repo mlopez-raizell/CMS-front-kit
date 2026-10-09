@@ -19,6 +19,11 @@
 //   npm run cms:descubrir
 //   npm run cms:descubrir -- --previa       (clave de previsualización, con borradores)
 //   npm run cms:descubrir -- --max 20       (tope de rutas cuyo contenido se pide; 50 por defecto)
+//   npm run cms:descubrir -- --menu a,b     (consulta esos menús por su identificador: el SDK
+//                                            no puede listarlos)
+//
+// Si no hay clave pública pero sí la de previsualización (un site en
+// construcción), usa esa y lo dice.
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -32,6 +37,8 @@ const args = process.argv.slice(2);
 const PREVIA = args.includes("--previa");
 const iMax = args.indexOf("--max");
 const MAX = iMax >= 0 ? Math.max(1, Number(args[iMax + 1]) || 50) : 50;
+const iMenu = args.indexOf("--menu");
+const MENUS = iMenu >= 0 ? String(args[iMenu + 1] ?? "").split(",").map((m) => m.trim()).filter(Boolean) : [];
 
 function parar(mensaje) {
   console.error(`✗ ${mensaje}`);
@@ -42,7 +49,11 @@ const manifiesto = leerManifiesto(RAIZ);
 if (!manifiesto?.sdk?.paquete) parar("Falta cms-front-kit.json: ejecuta esto desde la raíz del front, con el kit instalado.");
 
 const entorno = entornoDe(RAIZ);
-const nombreDeClave = PREVIA ? VARIABLES.clavePrevia : VARIABLES.clave;
+// Un site en construcción solo responde a la clave de previsualización: si es
+// la única que hay, se usa esa en vez de mandar a pedir la pública.
+const usaPrevia = PREVIA || (!rellena(entorno, VARIABLES.clave) && rellena(entorno, VARIABLES.clavePrevia));
+if (usaPrevia && !PREVIA) console.log(`Falta ${VARIABLES.clave}: se usa la de previsualización (incluye borradores).`);
+const nombreDeClave = usaPrevia ? VARIABLES.clavePrevia : VARIABLES.clave;
 if (!rellena(entorno, nombreDeClave)) {
   parar(`Falta ${nombreDeClave}. Pasa antes la checklist: npm run cms:comprobar`);
 }
@@ -65,7 +76,7 @@ const cliente = modulo.createClient({
 });
 
 const notas = [];
-const lectura = (extra = {}) => (PREVIA ? { borradores: true, ...extra } : extra);
+const lectura = (extra = {}) => (usaPrevia ? { borradores: true, ...extra } : extra);
 
 /** Llama a un método del SDK si existe. Devuelve `undefined` y lo anota si no, o si falla. */
 async function pedir(etiqueta, espacio, metodo, ...argumentos) {
@@ -98,7 +109,7 @@ mkdirSync(SALIDA, { recursive: true });
 
 const config = await pedir("config()", null, "config");
 if (config === undefined) {
-  const enConstruccion = !PREVIA && /sitio_no_disponible/.test(notas.at(-1) ?? "");
+  const enConstruccion = !usaPrevia && /sitio_no_disponible/.test(notas.at(-1) ?? "");
   parar(
     `El site no contesta. ${notas.at(-1) ?? ""}\n` +
       (enConstruccion
@@ -143,11 +154,20 @@ if (rutas.length > MAX) notas.push(`Hay ${rutas.length} rutas; solo se ha pedido
 const medios = await pedir("medios.listar()", "medios", "listar", lectura());
 if (medios !== undefined) guardar("medios.json", medios);
 
+// Los menús no se pueden listar: se piden por su identificador.
+const menus = [];
+for (const slug of MENUS) {
+  const datos = await pedir(`cms.menu(${slug})`, "cms", "menu", slug, lectura());
+  if (datos === undefined) continue; // no existe el método o falló: ya anotado
+  if (datos !== null) guardar(join("menus", nombreDeFichero(slug)), datos);
+  menus.push({ slug, datos });
+}
+
 // ── Resumen ─────────────────────────────────────────────────────────────────
 const s = superficie(cliente);
 const md = [];
 md.push("# Lo que tiene este site", "");
-md.push(`> Generado por \`npm run cms:descubrir\` el ${new Date().toISOString().slice(0, 10)}, con la clave ${PREVIA ? "de previsualización (incluye borradores)" : "pública (solo publicado)"}.`);
+md.push(`> Generado por \`npm run cms:descubrir\` el ${new Date().toISOString().slice(0, 10)}, con la clave ${usaPrevia ? "de previsualización (incluye borradores)" : "pública (solo publicado)"}.`);
 md.push("> Es una foto: si el contenido o el SDK cambian, vuelve a generarla. No se versiona.", "");
 
 md.push("## SDK instalado", "", `\`${sdk.nombre}\` ${sdk.version ?? ""}`.trim(), "");
@@ -181,6 +201,20 @@ for (const c of contenidos) {
 if (Array.isArray(medios)) {
   md.push(`## Medios (${medios.length})`, "");
   if (medios.length) md.push(...formaEnLineas(forma(medios)), "");
+}
+
+if (typeof cliente.cms?.menu === "function") {
+  md.push("## Menús", "");
+  md.push(
+    "Los menús no se pueden listar: el SDK los pide por su identificador. Pregunta a quien edite el site cómo se llaman",
+    "y consúltalos con `npm run cms:descubrir -- --menu <identificador>` (varios, separados por comas).",
+    "",
+  );
+  for (const m of menus.filter((m) => m.datos === null)) md.push(`- \`${m.slug}\`: no existe o no está publicado (con la clave usada).`);
+  if (menus.some((m) => m.datos === null)) md.push("");
+  for (const m of menus.filter((m) => m.datos !== null)) {
+    md.push(`### \`${m.slug}\``, "", `Respuesta completa: \`${join("menus", nombreDeFichero(m.slug))}\``, "", ...formaEnLineas(forma(m.datos)), "");
+  }
 }
 
 if (notas.length) md.push("## Lo que no se pudo consultar", "", ...notas.map((n) => `- ${n}`), "");

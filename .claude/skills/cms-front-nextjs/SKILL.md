@@ -30,7 +30,7 @@ SDK instalado (su README y sus `.d.ts`), y el contenido, con la skill
 | Saber qué rutas existen | El índice de rutas del SDK, al generar las rutas dinámicas | Una lista escrita a mano |
 | Pintar una página entera | **Una** llamada de contenido por ruta | Una llamada por bloque |
 | Datos que pide el navegador tras una interacción | Un manejador de ruta o una acción de servidor propios, que llaman al SDK | Exponer la clave para llamar directo |
-| Borradores | Solo con la clave de previsualización, y solo tras canjear un pase | Un parámetro `?borrador=1` que cualquiera puede escribir |
+| Borradores | Solo con la clave de previsualización, y solo tras canjear un pase. Excepción: desarrollo y vistas previas del hosting, con un interruptor de **entorno** (nunca de URL) que no existe en producción | Un parámetro `?borrador=1` que cualquiera puede escribir |
 
 ## Lo que devuelve el CMS
 
@@ -61,6 +61,11 @@ La lista de códigos de tu versión está en los tipos del SDK.
 El contenido es de un cliente que espera ver sus cambios. Antes de elegir
 estrategia, acuerda con la persona **cuánto puede tardar un cambio en verse**.
 La previsualización de borradores no se cachea nunca.
+
+El gateway limita las peticiones **por clave**: cachea lo que se repite en
+todas las páginas (configuración, menús, lista de rutas) y no pidas contenido
+de rutas que no existen. El detalle, y todo el camino a producción, en la
+skill `cms-front-produccion`.
 
 ## Racionalizaciones
 
