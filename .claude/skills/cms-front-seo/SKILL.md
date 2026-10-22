@@ -16,6 +16,8 @@ buscadores (sitemap, robots, redirecciones, `noindex` en previews). Rótulos:
 **OBL** obligatorio · **REC** recomendado. Datos finos (umbrales, tipos de
 schema, imágenes, móvil) en [`referencia.md`](referencia.md).
 
+Los nombres de esta skill son de Next.js. **En Astro la tabla de cierre es la misma** y cada fila se cumple con su equivalente (`<head>` del layout, `sitemap.xml.ts`, `404.astro` con `Astro.response.status = 404`; ver `cms-front-astro`). Lo de llevarlo a producción (variables, redirecciones del hosting, vuelta atrás) está en `cms-front-produccion`.
+
 Esto **no describe** qué datos SEO trae el site ni cómo se llaman: eso se
 descubre (`cms-front-descubrir-contenido`, `npm run cms:descubrir`) y las
 funciones se miran en los tipos del SDK. Antes de escribir una plantilla, mira
