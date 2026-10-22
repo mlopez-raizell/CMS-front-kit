@@ -15,6 +15,46 @@ cualquiera de ellas.
 En un proyecto: `npm run cms:estado` para ver la versión instalada y
 `npm run cms:actualizar` para traer la última.
 
+## v0.3.0 — 2026-10-22
+
+### Qué trae
+
+- **Skill nueva `cms-front-seo`:** todo lo que un front del kit tiene que
+  cumplir para salir bien en Google, y una **tabla de cierre** (S1-S22) que el
+  agente rellena entera antes de dar el front por terminado: ✅ con el fichero,
+  ➖ con una condición observable o ❌ con lo que falta y a quién se le pide.
+  - **Lo que se pinta:** todo en el HTML del servidor, metadatos con fallback,
+    canonical, hreflang, Open Graph con imagen 1200×630 real, JSON-LD global y
+    por tipo de página, un solo H1, migas, enlaces, imágenes y accesibilidad.
+  - **Lo que se sirve a los buscadores**, que en un front del kit es del
+    front: sitemap, robots, `noindex` por cabecera en previews y en modo
+    borrador, una sola 301 de dominio, 404 real.
+  - **Velocidad:** PageSpeed móvil ≥ 90 obligatorio, con las palancas.
+  - **No nombra ningún dato del site:** qué datos SEO trae cada página se
+    descubre (`cms:descubrir`); si falta uno, no se inventa: va a la tabla
+    como ❌ y se le pide a Raizell.
+  - Lleva una `referencia.md` con los datos finos (umbrales de Core Web Vitals,
+    estado de los tipos de schema, imágenes, móvil, multiidioma).
+- **Regla nueva en `AGENTS.cms.md`:** ningún front se da por terminado sin esa
+  tabla rellena.
+- **De dónde sale:** de un fallo medido. En cinco entregas del mismo encargo
+  sin la skill, 52 de 110 comprobaciones fallaron, todas por omisión
+  silenciosa (robots fijo, Open Graph incompleto, ninguna 404 con enlaces,
+  enlaces externos sin `rel`); con ella, 2. Esta versión del kit es una
+  adaptación al SDK de la que se midió y **no se ha vuelto a medir**.
+
+### Al actualizar desde v0.2.0
+
+- `npm run cms:actualizar` trae la skill y la regla. No cambia ningún fichero
+  del proyecto ni ninguna variable: nada que migrar.
+- Lo que la skill pide y un front puede no tener todavía: una variable propia
+  con el dominio público, la cabecera `noindex` fuera de producción, el
+  `sitemap.xml` y el `robots.txt`, y la imagen social por defecto. Son piezas
+  del front, no del kit.
+- Lo que **no** cubre y se hace por proyecto: investigación de palabras
+  clave, revisión humana de los textos y mapa de redirecciones de una web
+  antigua.
+
 ## v0.2.0 — 2026-10-08
 
 ### Qué trae
