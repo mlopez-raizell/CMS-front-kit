@@ -85,6 +85,7 @@ npm run cms:comprobar
 | `cms-front-nextjs` | Al escribir en Next.js el código que lee del CMS |
 | `cms-front-astro` | Al escribir en Astro el código que lee del CMS |
 | `cms-front-produccion` | Al llevar el front a producción, o cuando funciona en local y falla en el hosting |
+| `cms-front-seo` | Al construir o revisar un front que tiene que salir bien en Google; acaba con una tabla de comprobación |
 | `cms-front-registrar-aprendizaje` | Cuando se aprende algo que el siguiente debería saber |
 
 Funcionan con Claude Code directamente. Con otras herramientas,
