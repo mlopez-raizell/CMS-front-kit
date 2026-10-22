@@ -31,6 +31,7 @@ otro proyecto, ni por un ejemplo. Se descubre.
 | **Una ruta que acepta cualquier URL comprueba que existe antes de pedir su contenido** | Que un rastreo agote el límite de peticiones de la clave y caiga toda la web |
 | **El interruptor de borradores por entorno no existe en producción** | Que los visitantes vean lo que el cliente no ha publicado |
 | **No se sale a producción sin `cms:comprobar -- --produccion` en verde** | Descubrir en producción que la clave pública nunca se había probado |
+| **Ningún front se da por terminado sin la tabla de cierre de `cms-front-seo` rellena** | Que salga a producción sin canonical, sin sitemap, con las previews indexadas o sin 404 real |
 | **Los ficheros del kit no se editan** | Que una actualización no pueda aplicarse |
 
 ## 3 · Skills
@@ -42,6 +43,7 @@ otro proyecto, ni por un ejemplo. Se descubre.
 | `cms-front-nextjs` | Al escribir en Next.js el código que lee del CMS: páginas, rutas, imágenes, previsualización |
 | `cms-front-astro` | Al escribir en Astro el código que lee del CMS: cliente, islas, ruta genérica, caché, 404, sitemap |
 | `cms-front-produccion` | Al llevar el front a producción, o cuando funciona en local y falla en el hosting: variables, token del SDK, caché, redirecciones, vuelta atrás |
+| `cms-front-seo` | Al construir o revisar un front que tiene que salir bien en Google: metadatos, schema, sitemap, robots, previews, titulares, enlaces, imágenes, 404 y velocidad. Se cierra con su tabla |
 | `cms-front-registrar-aprendizaje` | Cuando se aprende algo que el siguiente desarrollador debería saber |
 
 ## 4 · Comandos
