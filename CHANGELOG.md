@@ -15,6 +15,38 @@ cualquiera de ellas.
 En un proyecto: `npm run cms:estado` para ver la versión instalada y
 `npm run cms:actualizar` para traer la última.
 
+## v0.4.0 — 2026-10-27
+
+### Qué trae
+
+- **Nueva base de medios: `https://medios.rzlcdn.com`.** Los medios del CMS
+  se sirven desde ahí desde el 2026-10-26. La anterior (el almacén de
+  Supabase) queda **retirada**: sigue sirviendo lo subido antes del cambio,
+  pero **lo subido después da 404**, fotos y vídeos.
+- **`cms:comprobar` marca como fallo una dirección retirada** y dice cuál
+  poner. Antes solo miraba si respondía, y la retirada responde. El
+  manifiesto gana `retiradas`, con las direcciones que ya no valen.
+- **`cms:comprobar` avisa si `next.config` no deja pasar el dominio de los
+  medios** en `images.remotePatterns`. Lo lee del fuente, no lo evalúa.
+- La skill `cms-front-nextjs` y el CHECKLIST (punto 6) lo dicen.
+
+### Al actualizar desde v0.3.0
+
+🔴 **Esto sí obliga a tocar el proyecto.** `cms:actualizar` no toca tu
+`.env.local` ni las variables del hosting:
+
+1. `npm run cms:actualizar`.
+2. En `.env.local` **y en las variables del hosting** (Vercel…):
+   `MEDIA_BASE_URL=https://medios.rzlcdn.com`.
+3. Si usas `next/image`: añade
+   `{ protocol: "https", hostname: "medios.rzlcdn.com" }` a
+   `images.remotePatterns` en `next.config`.
+4. Vuelve a desplegar.
+5. `npm run cms:comprobar` tiene que salir sin el fallo de la dirección
+   retirada.
+
+El SDK no cambia: la `0.6.0` vale, y su registro sigue siendo el mismo.
+
 ## v0.3.0 — 2026-10-22
 
 ### Qué trae
