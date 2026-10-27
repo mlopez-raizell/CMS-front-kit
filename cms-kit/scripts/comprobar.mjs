@@ -25,7 +25,7 @@ import { join } from "node:path";
 import { leerManifiesto } from "./lib/manifiesto.mjs";
 import {
   VARIABLES, cargarSdk, codigoDe, direccion, entornoDe, esPublica, gestorDe, habitual, leerEnv, lineaDeRegistro,
-  localizarSdk, rellena, sinSecretos, variablesTapadas,
+  localizarSdk, permiteHost, rellena, retirada, sinSecretos, variablesTapadas,
 } from "./lib/entorno.mjs";
 
 const RAIZ = process.cwd();
@@ -251,6 +251,15 @@ async function direcciones(entorno, manifiesto) {
       falta(`${nombre} no es una dirección http(s) válida`, delKit ? `La habitual es: ${delKit}` : "CHECKLIST 6");
       continue;
     }
+    if (retirada(manifiesto, cual, enUso)) {
+      falta(
+        `${nombre} apunta a una dirección retirada`,
+        (delKit ? `Cámbiala a la vigente en .env.local y en las variables del hosting, y vuelve a desplegar:\n${nombre}=${delKit}` : "Pide la vigente a Raizell.") +
+          "\nLa retirada puede seguir contestando con lo antiguo, pero lo nuevo ya no está ahí.",
+      );
+      continue;
+    }
+    if (cual === "medios") imagenesDeNext(enUso);
     if (delKit && enUso !== delKit) {
       aviso(`${nombre} no es la dirección habitual (${delKit})`, "Correcto solo si Raizell te ha dado otra para este site o estás en un entorno de pruebas.");
     }
@@ -266,6 +275,22 @@ async function direcciones(entorno, manifiesto) {
       );
     }
   }
+}
+
+// Un front Next.js con `next/image` solo pinta imágenes de los dominios que su
+// `next.config` deja pasar: con la base bien puesta y el dominio sin añadir, las
+// imágenes fallan igual. Se lee el fuente; no se evalúa.
+function imagenesDeNext(base) {
+  const fichero = ["next.config.ts", "next.config.mjs", "next.config.js", "next.config.cjs"].find((f) => existsSync(join(RAIZ, f)));
+  if (!fichero) return;
+  const texto = readFileSync(join(RAIZ, fichero), "utf8");
+  if (!/remotePatterns|domains/.test(texto)) return;
+  const host = new URL(base).hostname;
+  if (permiteHost(texto, host)) return;
+  aviso(
+    `next.config no deja pasar las imágenes de ${host}`,
+    `Si pintas con next/image, añade el dominio a images.remotePatterns en ${fichero}:\n{ protocol: "${new URL(base).protocol.slice(0, -1)}", hostname: "${host}" }`,
+  );
 }
 
 // ── 7. El site responde ─────────────────────────────────────────────────────

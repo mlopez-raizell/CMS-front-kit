@@ -135,6 +135,15 @@ npm run cms:actualizar
 Después, copia la nueva de `.env.local.example` a tu `.env.local` y a las
 variables del hosting.
 
+Si pintas con `next/image`, el dominio de la base de medios tiene que estar
+en `images.remotePatterns` de tu `next.config`. Al cambiar la base, cambia
+también ese dominio.
+
+> 🔴 **Una dirección retirada puede seguir respondiendo.** Pasó con los medios
+> en v0.4.0: la base vieja seguía sirviendo lo antiguo y lo subido después daba
+> 404. Por eso `cms:comprobar` no se fía de que responda: si tu dirección es
+> una que el kit ya retiró, lo marca como fallo y te dice la vigente.
+
 > Si una dirección llega vacía, es que esta versión del kit todavía no la
 > trae: pídesela a Raizell.
 

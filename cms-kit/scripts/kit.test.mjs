@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { direccion, entornoDe, esPublica, habitual, leerEnv, lineaDeRegistro, localizarSdk, rellena, sinSecretos, variablesTapadas } from "./lib/entorno.mjs";
+import { direccion, entornoDe, esPublica, habitual, leerEnv, lineaDeRegistro, localizarSdk, permiteHost, rellena, sinSecretos, variablesTapadas } from "./lib/entorno.mjs";
 import { forma, formaEnLineas, superficie } from "./lib/forma.mjs";
 import { expandir, leerManifiesto } from "./lib/manifiesto.mjs";
 import { comparar, tramoChangelog } from "./kit.mjs";
@@ -352,6 +352,43 @@ test("comprobar: una dirección que falta en el entorno se pide con su valor, no
   assert.ok(r.salida.includes(`✗ falta RAIZELL_API_URL\n      Ponla en .env.local con la dirección habitual:\n      RAIZELL_API_URL=${LOCAL}\n`), r.salida);
   assert.doesNotMatch(r.salida, /no es la dirección habitual/, "la de medios coincide con la del kit");
   assert.match(r.salida, /✓ la dirección de los medios responde/);
+});
+
+test("comprobar: una dirección RETIRADA es un fallo, no un aviso, y dice la vigente", (t) => {
+  // Pasó al mover los medios a R2: el almacén viejo seguía contestando con lo
+  // antiguo, `responde()` daba verde y lo subido después salía 404 en el front.
+  const vieja = `${LOCAL}/medios-viejos`;
+  const dir = frontListo(t, { env: entorno({ medios: vieja }) });
+  const f = join(dir, "cms-front-kit.json");
+  const m = JSON.parse(readFileSync(f, "utf8"));
+  writeFileSync(f, JSON.stringify({ ...m, direcciones: { ...m.direcciones, medios: `${LOCAL}/medios` }, retiradas: { medios: [`${vieja}/`] } }));
+  const r = comprobar(dir, ["--sin-red"]);
+  assert.equal(r.estado, 1, r.salida);
+  assert.ok(r.salida.includes(`✗ MEDIA_BASE_URL apunta a una dirección retirada`), r.salida);
+  assert.ok(r.salida.includes(`MEDIA_BASE_URL=${LOCAL}/medios`), "dice cuál poner");
+  assert.doesNotMatch(r.salida, /MEDIA_BASE_URL no es la dirección habitual/, "no se queda en un aviso");
+});
+
+test("comprobar: next.config con remotePatterns que no deja pasar el dominio de los medios avisa", (t) => {
+  const dir = frontListo(t);
+  writeFileSync(join(dir, "next.config.ts"), `export default { images: { remotePatterns: [{ protocol: "https", hostname: "*.supabase.co" }] } };\n`);
+  const r = comprobar(dir, ["--sin-red"]);
+  assert.ok(r.salida.includes("! next.config no deja pasar las imágenes de 127.0.0.1"), r.salida);
+});
+
+test("comprobar: next.config que sí deja pasar el dominio de los medios no avisa", (t) => {
+  const dir = frontListo(t);
+  writeFileSync(join(dir, "next.config.mjs"), `export default { images: { remotePatterns: [{ protocol: "http", hostname: "127.0.0.1" }] } };\n`);
+  const r = comprobar(dir, ["--sin-red"]);
+  assert.doesNotMatch(r.salida, /next\.config no deja pasar/);
+});
+
+test("permiteHost: nombre exacto o comodín del dominio padre", () => {
+  assert.equal(permiteHost(`hostname: "medios.rzlcdn.com"`, "medios.rzlcdn.com"), true);
+  assert.equal(permiteHost(`hostname: "*.rzlcdn.com"`, "medios.rzlcdn.com"), true);
+  assert.equal(permiteHost(`hostname: "**.rzlcdn.com"`, "medios.rzlcdn.com"), true);
+  assert.equal(permiteHost(`hostname: "*.supabase.co"`, "medios.rzlcdn.com"), false);
+  assert.equal(permiteHost(`hostname: "otromedios.rzlcdn.com"`, "medios.rzlcdn.com"), false);
 });
 
 test("direccion: manda el entorno; si no, la del kit", () => {

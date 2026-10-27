@@ -38,7 +38,7 @@ SDK instalado (su README y sus `.d.ts`), y el contenido, con la skill
 |---|---|
 | Texto enriquecido | Llega como **árbol de nodos**, no como HTML. Se pinta con componentes propios; el SDK trae un atajo a HTML si no hace falta más. |
 | Enlaces dentro del texto | Se validan con lo que trae el SDK antes de ir a un `href` |
-| Imágenes | Se piden al SDK ya compuestas; el texto alternativo viene del CMS |
+| Imágenes | Se piden al SDK ya compuestas; el texto alternativo viene del CMS. Si se pintan con `next/image`, el dominio de `MEDIA_BASE_URL` tiene que estar en `images.remotePatterns`: sin él fallan aunque la URL sea correcta. `cms:comprobar` lo avisa |
 | Contenido en varios idiomas | El idioma se pide en cada lectura; los idiomas activos los dice la configuración del site |
 | Módulos | Se pregunta si el site lo tiene activo antes de pintar su sección |
 
@@ -84,4 +84,5 @@ skill `cms-front-produccion`.
 - Una variable `NEXT_PUBLIC_` que contiene una clave.
 - Más de un sitio donde se crea el cliente.
 - Una URL de imagen construida con una plantilla de texto.
+- Un `remotePatterns` con un dominio de medios escrito que no es el de `MEDIA_BASE_URL`.
 - Un `catch` que compara el mensaje del error en vez de su código.
