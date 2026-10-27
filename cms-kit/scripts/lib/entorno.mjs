@@ -83,6 +83,32 @@ export function direccion(entorno, manifiesto, cual) {
   return rellena(entorno, nombre) ? sinBarraFinal(entorno[nombre]) : habitual(manifiesto, cual) ?? undefined;
 }
 
+/**
+ * ¿Es una dirección que el kit ya dio por retirada (`retiradas` del manifiesto)?
+ * Una retirada puede seguir contestando —con lo antiguo— y por eso no basta con
+ * mirar si responde.
+ */
+export function retirada(manifiesto, cual, valor) {
+  const lista = manifiesto?.retiradas?.[cual];
+  if (!Array.isArray(lista) || !tieneValor(valor)) return false;
+  return lista.some((v) => tieneValor(v) && sinBarraFinal(v) === sinBarraFinal(valor));
+}
+
+/**
+ * ¿El texto de un `next.config` deja pasar imágenes de `host`? Vale el nombre
+ * exacto entre comillas o un comodín (`*.` o `**.`) de un dominio padre. Es una
+ * lectura del fuente, no una evaluación: ante la duda, dice que no y el aviso
+ * pide revisarlo.
+ */
+export function permiteHost(texto, host) {
+  const nombres = [...String(texto).matchAll(/["'`]([^"'`\s]+)["'`]/g)].map((m) => m[1]);
+  return nombres.some((n) => {
+    if (n === host) return true;
+    const comodin = n.match(/^\*{1,2}\.(.+)$/);
+    return comodin !== null && host.endsWith(`.${comodin[1]}`);
+  });
+}
+
 /** `@scope:registry=url` — la línea que el `.npmrc` del front necesita. Sin secreto. */
 export function lineaDeRegistro(manifiesto) {
   const scope = manifiesto.sdk.paquete.split("/")[0];
