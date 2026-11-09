@@ -15,6 +15,21 @@ cualquiera de ellas.
 En un proyecto: `npm run cms:estado` para ver la versión instalada y
 `npm run cms:actualizar` para traer la última.
 
+## Sin publicar
+
+### Qué trae
+
+- **Skill nueva `cms-front-bloques`**: cómo pinta el front cada bloque según
+  su **plantilla** (SDK `0.9.0`) y cómo hacer que funcionen los enlaces a una
+  sección de la propia página con el **ancla** de cada bloque (SDK `0.10.0`).
+  Sale de un fallo visto: anclas escritas a mano en el botón y repetidas en el
+  front, que se rompían en silencio con una errata.
+
+### Qué hay que hacer en un proyecto
+
+- Nada para instalarla: llega con `npm run cms:actualizar`. Para usar los dos
+  datos, el SDK tiene que ser `0.10.0` o posterior.
+
 ## v0.4.0 — 2026-10-27
 
 ### Qué trae

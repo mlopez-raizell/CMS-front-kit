@@ -42,6 +42,7 @@ otro proyecto, ni por un ejemplo. Se descubre.
 | `cms-front-descubrir-contenido` | Antes de escribir cualquier cosa que pinte contenido del CMS |
 | `cms-front-nextjs` | Al escribir en Next.js el código que lee del CMS: páginas, rutas, imágenes, previsualización |
 | `cms-front-astro` | Al escribir en Astro el código que lee del CMS: cliente, islas, ruta genérica, caché, 404, sitemap |
+| `cms-front-bloques` | Al escribir el componente que pinta los bloques: qué diseño lleva cada uno (su plantilla) y el `id` que hace funcionar los enlaces a una sección de la página (su ancla) |
 | `cms-front-produccion` | Al llevar el front a producción, o cuando funciona en local y falla en el hosting: variables, token del SDK, caché, redirecciones, vuelta atrás |
 | `cms-front-seo` | Al construir o revisar un front que tiene que salir bien en Google: metadatos, schema, sitemap, robots, previews, titulares, enlaces, imágenes, 404 y velocidad. Se cierra con su tabla |
 | `cms-front-registrar-aprendizaje` | Cuando se aprende algo que el siguiente desarrollador debería saber |
