@@ -4,7 +4,8 @@
   "repositorio": "https://github.com/mlopez-raizell/CMS-front-kit.git",
   "sdk": {
     "paquete": "@mlopez-raizell/raizell-sdk",
-    "registro": "https://npm.pkg.github.com"
+    "registro": "https://registry.npmjs.org",
+    "retirados": ["https://npm.pkg.github.com"]
   },
   "direcciones": {
     "api": "https://apicms.raizell.com",

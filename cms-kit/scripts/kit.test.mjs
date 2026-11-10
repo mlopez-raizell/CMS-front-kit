@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { direccion, entornoDe, esPublica, habitual, leerEnv, lineaDeRegistro, localizarSdk, permiteHost, rellena, sinSecretos, variablesTapadas } from "./lib/entorno.mjs";
+import { ambitoDelSdk, direccion, entornoDe, esPublica, habitual, leerEnv, lineaDeRegistro, lineasDeRegistroRetirado, localizarSdk, registroPublico, permiteHost, rellena, sinSecretos, variablesTapadas } from "./lib/entorno.mjs";
 import { forma, formaEnLineas, superficie } from "./lib/forma.mjs";
 import { expandir, leerManifiesto } from "./lib/manifiesto.mjs";
 import { comparar, tramoChangelog } from "./kit.mjs";
@@ -179,7 +179,39 @@ test("el manifiesto enumera ficheros que existen, y no se lleva las pruebas", ()
   ]) assert.ok(rutas.includes(esperado), `falta ${esperado}`);
   assert.equal(rutas.filter((r) => /\.test\.mjs$/.test(r)).length, 0);
   assert.equal(rutas.filter((r) => /^(README|CHANGELOG|CLAUDE)\.md$/.test(r)).length, 0);
-  assert.equal(lineaDeRegistro(manifiesto), "@mlopez-raizell:registry=https://npm.pkg.github.com");
+  // El SDK sale del registro público de npm: el proyecto no necesita ninguna línea de `.npmrc`.
+  assert.equal(manifiesto.sdk.registro, "https://registry.npmjs.org");
+  assert.equal(registroPublico(manifiesto), true);
+  assert.equal(lineaDeRegistro(manifiesto), null);
+  assert.equal(ambitoDelSdk(manifiesto), "@mlopez-raizell");
+});
+
+test("registro: uno que no es el público sí pide su línea de .npmrc", () => {
+  const privado = { sdk: { paquete: SDK, registro: "https://npm.pkg.github.com" } };
+  assert.equal(registroPublico(privado), false);
+  assert.equal(lineaDeRegistro(privado), "@mlopez-raizell:registry=https://npm.pkg.github.com");
+});
+
+test("lineasDeRegistroRetirado: caza lo que desvía el SDK a GitHub y nada más", () => {
+  const m = leerManifiesto(KIT);
+  assert.deepEqual(m.sdk.retirados, ["https://npm.pkg.github.com"]);
+  const viejo = [
+    "# lo de siempre",
+    "save-exact=true",
+    "@mlopez-raizell:registry=https://npm.pkg.github.com",
+    "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}",
+    "@otro:registry=https://npm.pkg.github.com",
+  ].join("\n");
+  assert.deepEqual(lineasDeRegistroRetirado(viejo, m), [
+    "@mlopez-raizell:registry=https://npm.pkg.github.com",
+    "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}",
+  ]);
+  // Un `.npmrc` sano, uno vacío y una línea comentada no se tocan.
+  assert.deepEqual(lineasDeRegistroRetirado("save-exact=true\n", m), []);
+  assert.deepEqual(lineasDeRegistroRetirado("", m), []);
+  assert.deepEqual(lineasDeRegistroRetirado("# @mlopez-raizell:registry=https://npm.pkg.github.com\n", m), []);
+  // Apuntar el ámbito al registro público tampoco es un desvío.
+  assert.deepEqual(lineasDeRegistroRetirado("@mlopez-raizell:registry=https://registry.npmjs.org\n", m), []);
 });
 
 test("versiones y tramo del changelog", () => {
@@ -204,10 +236,11 @@ test("instalar: deja el proyecto listo y es idempotente", (t) => {
   assert.equal(r.estado, 0, r.salida);
 
   for (const f of [
-    "AGENTS.cms.md", "AGENTS.md", "CLAUDE.md", ".npmrc", ".env.local", ".env.local.example",
+    "AGENTS.cms.md", "AGENTS.md", "CLAUDE.md", ".env.local", ".env.local.example",
     "cms-kit/CHECKLIST.md", "cms-kit/scripts/comprobar.mjs", ".claude/skills/cms-front-nextjs/SKILL.md",
   ]) assert.ok(existsSync(join(dir, f)), `falta ${f}`);
   assert.ok(!existsSync(join(dir, "README.md")), "el README del kit no se instala");
+  assert.ok(!existsSync(join(dir, ".npmrc")), "el SDK es público: no hace falta .npmrc");
 
   const pkg = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
   assert.equal(pkg.scripts.dev, "next dev");
@@ -228,13 +261,25 @@ test("instalar: deja el proyecto listo y es idempotente", (t) => {
   const ignore = readFileSync(join(dir, ".gitignore"), "utf8");
   assert.match(ignore, /^\.env\.local$/m);
   assert.match(ignore, /^\.cms-kit\/$/m);
-  assert.doesNotMatch(readFileSync(join(dir, ".npmrc"), "utf8"), /_authToken/);
 
   const antes = readFileSync(join(dir, ".gitignore"), "utf8") + readFileSync(join(dir, "package.json"), "utf8");
   const segunda = correr(INSTALADOR, dir);
   assert.equal(segunda.estado, 0, segunda.salida);
   assert.match(segunda.salida, /Nada que hacer/);
   assert.equal(readFileSync(join(dir, ".gitignore"), "utf8") + readFileSync(join(dir, "package.json"), "utf8"), antes);
+});
+
+test("instalar: ante el .npmrc de GitHub de una versión anterior, dice qué quitar y no enseña el token", (t) => {
+  const dir = frontVacio(t);
+  const viejo = "@mlopez-raizell:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=ghp_tokenescrito\n";
+  writeFileSync(join(dir, ".npmrc"), viejo);
+  const r = correr(INSTALADOR, dir);
+  assert.equal(r.estado, 1, "con pendientes sale en rojo");
+  assert.match(r.salida, /tu \.npmrc manda el SDK a un registro que ya no se usa/);
+  assert.match(r.salida, /@mlopez-raizell:registry=https:\/\/npm\.pkg\.github\.com/);
+  assert.match(r.salida, /líneas? `_authToken`/);
+  assert.ok(!r.salida.includes("ghp_tokenescrito"), "el valor de un token ha salido por pantalla");
+  assert.equal(readFileSync(join(dir, ".npmrc"), "utf8"), viejo, "no se toca el .npmrc del proyecto");
 });
 
 test("instalar: no pisa nada que ya existiera", (t) => {
@@ -253,7 +298,7 @@ test("instalar: no pisa nada que ya existiera", (t) => {
   assert.equal(readFileSync(join(dir, ".env.local"), "utf8"), "RAIZELL_API_KEY=la-mia\n");
   assert.equal(readFileSync(join(dir, "cms-kit", "CHECKLIST.md"), "utf8"), "tocado\n");
   assert.match(r.salida, /tu AGENTS\.md no remite al kit/);
-  assert.match(r.salida, /@mlopez-raizell:registry=/);
+  assert.doesNotMatch(r.salida, /registry=/, "con el registro público no se pide ninguna línea de .npmrc");
   assert.match(r.salida, /CHECKLIST\.md ya existía y es distinto/);
   const ignore = readFileSync(join(dir, ".gitignore"), "utf8");
   assert.doesNotMatch(ignore, /^\.env\.local$/m, "`.env*` ya lo cubría");
@@ -291,7 +336,8 @@ test("comprobar: recién instalado, dice qué falta y a qué punto ir", (t) => {
   // Las direcciones las trae el kit. Mientras no traiga la de medios, se pide.
   assert.doesNotMatch(r.salida, /falta MEDIA_BASE_URL/, "el instalador ya la dejó puesta");
   assert.doesNotMatch(r.salida, /falta RAIZELL_API_URL/, "el instalador ya la dejó puesta");
-  assert.match(r.salida, /el token te lo da Raizell|Con el token puesto/);
+  assert.match(r.salida, /Es público, sin token/);
+  assert.doesNotMatch(r.salida, /el token te lo da Raizell/);
   assert.match(r.salida, /! falta RAIZELL_PREVIEW_KEY/, "la de previsualización es aviso, no bloqueo");
   assert.match(r.salida, /CHECKLIST 4/);
 });
@@ -326,12 +372,34 @@ test("comprobar: detecta credenciales mal colocadas", (t) => {
   assert.equal(r.estado, 1);
   assert.match(r.salida, /NEXT_PUBLIC_API_KEY contiene una clave de API/);
   assert.match(r.salida, /el \.npmrc del proyecto lleva un token escrito/);
+  assert.match(r.salida, /el \.npmrc del proyecto manda el SDK a un registro que ya no se usa/);
   assert.match(r.salida, /\.env\.local NO está ignorado por git/);
   assert.ok(!r.salida.includes("ghp_tokenescrito") && !r.salida.includes(CLAVE));
 
   // La forma correcta en un .npmrc versionado: una variable, no el valor.
   writeFileSync(join(dir, ".npmrc"), "@mlopez-raizell:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}\n");
   assert.doesNotMatch(comprobar(dir).salida, /lleva un token escrito/);
+});
+
+test("comprobar: el SDK es público — sin .npmrc sale en verde, y un .npmrc antiguo es un fallo", (t) => {
+  const dir = frontListo(t);
+  assert.ok(!existsSync(join(dir, ".npmrc")), "el instalador no deja ningún .npmrc");
+  const limpio = comprobar(dir);
+  assert.equal(limpio.estado, 0, limpio.salida);
+  assert.match(limpio.salida, /el \.npmrc del proyecto no desvía el SDK a otro registro/);
+  assert.doesNotMatch(limpio.salida, /✗/);
+
+  // Lo que dejó el kit 0.4.0: el ámbito mandado a GitHub, con un token por variable.
+  writeFileSync(join(dir, ".npmrc"), "@mlopez-raizell:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}\n");
+  const viejo = comprobar(dir);
+  assert.equal(viejo.estado, 1);
+  assert.match(viejo.salida, /✗ el \.npmrc del proyecto manda el SDK a un registro que ya no se usa/);
+  assert.match(viejo.salida, /El SDK sale ahora de npm público, sin token/);
+  assert.doesNotMatch(viejo.salida, /lleva un token escrito/, "una variable no es un token escrito");
+
+  // Un .npmrc que no toca el SDK no molesta.
+  writeFileSync(join(dir, ".npmrc"), "save-exact=true\n");
+  assert.equal(comprobar(dir).estado, 0);
 });
 
 test("comprobar: una dirección que no responde manda a actualizar el kit", (t) => {
