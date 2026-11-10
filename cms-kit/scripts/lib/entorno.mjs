@@ -109,10 +109,43 @@ export function permiteHost(texto, host) {
   });
 }
 
-/** `@scope:registry=url` — la línea que el `.npmrc` del front necesita. Sin secreto. */
+/** El ámbito del SDK: `@mlopez-raizell`. */
+export function ambitoDelSdk(manifiesto) {
+  return manifiesto.sdk.paquete.split("/")[0];
+}
+
+/** ¿El SDK sale del registro público de npm? Entonces el proyecto no necesita `.npmrc` ni token. */
+export function registroPublico(manifiesto) {
+  return new URL(manifiesto.sdk.registro).hostname === "registry.npmjs.org";
+}
+
+/**
+ * `@scope:registry=url` — la línea que el `.npmrc` del front necesita. Sin secreto.
+ * Con el registro público de npm no hace falta ninguna: devuelve `null`.
+ */
 export function lineaDeRegistro(manifiesto) {
-  const scope = manifiesto.sdk.paquete.split("/")[0];
-  return `${scope}:registry=${manifiesto.sdk.registro}`;
+  if (registroPublico(manifiesto)) return null;
+  return `${ambitoDelSdk(manifiesto)}:registry=${manifiesto.sdk.registro}`;
+}
+
+/**
+ * Las líneas de un `.npmrc` que mandan el SDK a un registro que ya no es el suyo
+ * (el de GitHub Packages, al que se movió el SDK antes de pasar a npm público).
+ * Con ellas, `npm install` sigue yendo allí y pide un token que ya no hace falta.
+ */
+export function lineasDeRegistroRetirado(texto, manifiesto) {
+  const ambito = ambitoDelSdk(manifiesto);
+  const retirados = (manifiesto.sdk.retirados ?? []).map((u) => new URL(u).hostname);
+  return String(texto)
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => {
+      if (l.startsWith("#")) return false;
+      if (l.startsWith(`${ambito}:registry=`)) {
+        return retirados.some((h) => l.includes(h)) || !l.includes(new URL(manifiesto.sdk.registro).hostname);
+      }
+      return retirados.some((h) => l.startsWith(`//${h}/`));
+    });
 }
 
 /** Con qué se instala en este proyecto, según el lockfile que haya. */

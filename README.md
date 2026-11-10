@@ -46,8 +46,8 @@ node /tmp/cms-front-kit/cms-kit/scripts/instalar.mjs
 ```
 
 El instalador **no pisa nada tuyo**: si un fichero ya existe, lo deja y te
-dice qué línea añadirle. Tampoco instala el SDK ni te pide credenciales: eso
-es la checklist.
+dice qué línea añadirle. Tampoco instala el SDK (es público, sin token) ni te
+pide credenciales: eso es la checklist.
 
 Después:
 
@@ -64,7 +64,7 @@ npm run cms:comprobar
 | `cms-kit/scripts/` | Los comandos `cms:*` |
 | `.claude/skills/cms-front-*/` | Las skills del kit |
 | `cms-front-kit.json` | La versión instalada y la huella de cada fichero |
-| `.npmrc` · `.env.local.example` · `.env.local` · `AGENTS.md` · `CLAUDE.md` | Solo si no existían |
+| `.env.local.example` · `.env.local` · `AGENTS.md` · `CLAUDE.md` | Solo si no existían |
 
 ## Comandos
 
@@ -119,5 +119,6 @@ real encontrado construyendo un front.
 [MIT](LICENSE). Puedes copiar, modificar y redistribuir el kit, también dentro
 de proyectos de clientes.
 
-La licencia cubre el kit y nada más: no incluye el nombre ni la marca Raizell,
-ni el SDK, ni el acceso al CMS, que tienen sus propias condiciones.
+La licencia cubre el kit y nada más: no incluye el nombre ni la marca Raizell
+ni el acceso al CMS, que tienen sus propias condiciones. El SDK es un paquete
+público de npm con su propia licencia (MIT).

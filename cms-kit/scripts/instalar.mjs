@@ -10,12 +10,14 @@
 //   3. Registra en `cms-front-kit.json` la versión instalada y la huella de
 //      cada fichero, para poder actualizar sin pisar lo que toques.
 //   4. Añade los scripts `cms:*` a package.json. NO pisa los que ya tengas.
-//   5. Crea lo que falte del proyecto: `.npmrc`, `.env.local.example`,
-//      `.env.local` (con las direcciones ya puestas y las claves vacías),
-//      `AGENTS.md` y `CLAUDE.md`. Ninguno se sobrescribe.
+//   5. Crea lo que falte del proyecto: `.env.local.example`, `.env.local` (con
+//      las direcciones ya puestas y las claves vacías), `AGENTS.md` y
+//      `CLAUDE.md`. Ninguno se sobrescribe. El SDK sale del registro público de
+//      npm: no crea `.npmrc`, y si el proyecto trae el de una versión anterior
+//      (GitHub Packages) avisa de qué líneas quitar.
 //   6. Se asegura de que `.env.local` y `.cms-kit/` están en `.gitignore`.
 //
-// NO instala el SDK ni pide credenciales: eso es la checklist, y la recorre
+// NO instala el SDK ni pide credenciales (el SDK es público): eso es la checklist, y la recorre
 // `npm run cms:comprobar`.
 //
 // Es idempotente: correrlo dos veces no cambia nada la segunda.
@@ -24,7 +26,7 @@ import { appendFileSync, chmodSync, copyFileSync, existsSync, mkdirSync, readFil
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MANIFIESTO, escribirManifiesto, expandir, huella, leerManifiesto } from "./lib/manifiesto.mjs";
-import { VARIABLES, entornoDe, habitual, lineaDeRegistro, rellena } from "./lib/entorno.mjs";
+import { VARIABLES, entornoDe, habitual, lineaDeRegistro, lineasDeRegistroRetirado, rellena } from "./lib/entorno.mjs";
 
 const ORIGEN = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..");
 const DESTINO = process.cwd();
@@ -124,12 +126,28 @@ if (nuevos > 0) {
 // ── 5. Lo que falte del proyecto ────────────────────────────────────────────
 const leer = (f) => (existsSync(f) ? readFileSync(f, "utf8") : null);
 
-// .npmrc — solo dice de dónde sale el SDK. El token NUNCA va aquí.
+// .npmrc — con el SDK en el registro público de npm NO hace falta: no se crea.
+// Si el proyecto trae el de una versión anterior del kit (el SDK salía de GitHub
+// Packages), se avisa de qué líneas quitar. Nunca se escribe ni se imprime un token.
 {
   const f = join(DESTINO, ".npmrc");
   const linea = lineaDeRegistro(manifiesto);
   const texto = leer(f);
-  if (texto === null) {
+  if (linea === null) {
+    if (texto !== null) {
+      const viejas = lineasDeRegistroRetirado(texto, manifiesto);
+      if (viejas.length > 0) {
+        const delRegistro = viejas.filter((l) => !/_authToken\s*=/.test(l));
+        const conToken = viejas.length - delRegistro.length;
+        pendientes.push(
+          `tu .npmrc manda el SDK a un registro que ya no se usa: ahora sale de npm público, sin token.\n` +
+            `     Quita de .npmrc ${viejas.length === 1 ? "esta línea" : "estas líneas"} (déjalo vacío si no tiene nada más):` +
+            delRegistro.map((l) => `\n     ${l}`).join("") +
+            (conToken > 0 ? `\n     y ${conToken === 1 ? "la línea" : `las ${conToken} líneas`} \`_authToken\` de ese registro (su valor no se muestra)` : ""),
+        );
+      }
+    }
+  } else if (texto === null) {
     writeFileSync(f, `# De dónde sale el SDK de Raizell. Este fichero se versiona: NO pongas aquí el token.\n${linea}\n`);
     hechos.push("creado .npmrc con el registro del SDK");
   } else if (!texto.includes(linea)) {

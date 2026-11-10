@@ -15,7 +15,7 @@ clave pública como requisito: `npm run cms:comprobar -- --produccion`.
 |---|---|---|---|
 | 1 | Node.js, gestor de paquetes y git | Tú | Todo |
 | 2 | Tu cuenta de GitHub y el repositorio del front | Tú | Guardar y desplegar tu trabajo |
-| 3 | El token para descargar el SDK | Raizell | Instalar el SDK |
+| 3 | Poder descargar el SDK (es público: sin token) | Nadie: ya está en npm | Nada, salvo un `.npmrc` antiguo |
 | 4 | La clave pública del site | Raizell | Producción (para desarrollar basta la de previsualización) |
 | 5 | La clave de previsualización del site | Raizell | Borradores y sites en construcción |
 | 6 | Las direcciones de la API y de los medios | El kit las trae puestas | Conexión e imágenes |
@@ -23,7 +23,7 @@ clave pública como requisito: `npm run cms:comprobar -- --produccion`.
 | 8 | El diseño y los materiales | Cliente o agencia | Maquetar |
 | 9 | Dónde se despliega y con qué variables | Tú y Raizell | Publicar |
 
-> **Pide a Raizell los puntos 3, 4, 5 y 7 en un solo mensaje**, indicando para
+> **Pide a Raizell los puntos 4, 5 y 7 en un solo mensaje**, indicando para
 > qué site es. Son cosas que se emiten a mano y pedirlas de una en una alarga
 > el arranque varios días.
 
@@ -51,28 +51,32 @@ Crea en ella el repositorio del front y conecta tu proyecto local.
 **Cómo se comprueba.** `git remote -v` enseña tu repositorio.
 
 > Tu cuenta no necesita ningún permiso de Raizell. Lo que da acceso al SDK no
-> es tu cuenta, sino el token del punto 3.
+> es tu cuenta: el SDK es público y no pide ninguna credencial.
 
-## 3 · El token para descargar el SDK
+## 3 · Poder descargar el SDK
 
-**Qué es.** El SDK con el que se habla con el CMS es un paquete privado. Para
-descargarlo hace falta un token que solo permite **leer paquetes**.
+**Qué es.** El SDK con el que se habla con el CMS es un paquete **público** del
+registro de npm (<https://registry.npmjs.org>): se descarga como cualquier otro,
+**sin token, sin cuenta y sin `.npmrc`**. El nombre del paquete y su registro
+están en `cms-front-kit.json` (`sdk`).
 
-**Cómo se consigue.** **Te lo da Raizell.** No lo creas tú.
+**Cómo se consigue.** Nada que pedir. Se instala con el gestor del proyecto:
+`npm install @mlopez-raizell/raizell-sdk` (o `pnpm add …`, `yarn add …`).
+`npm run cms:comprobar` te dice el comando exacto y si ya está instalado.
 
-**Dónde va.** En el `.npmrc` de tu carpeta de usuario (`~/.npmrc`), nunca en
-el del proyecto. La línea exacta la indica el README del SDK. En el hosting y
-en la integración continua va como variable de entorno secreta, **marcada
-para todos los entornos que construyan** (vista previa y producción): si solo
-está en uno, el otro falla al instalar con «authentication token not provided».
-Ver la skill `cms-front-produccion`.
+**Cómo se comprueba.** `npm view @mlopez-raizell/raizell-sdk version` contesta
+una versión, y `cms:comprobar` marca el punto 3 en verde.
 
-**Cómo se comprueba.** El SDK se instala sin error de autenticación.
-
-> 🔴 Es una credencial: trátala como una clave. El `.npmrc` **del proyecto**
-> se versiona y solo dice de dónde sale el paquete. Si alguna vez contiene el
-> token, ese token está publicado: avisa a Raizell para que lo revoque y te
-> dé otro.
+> 🔴 **Si vienes de una versión anterior del kit (0.4.0 o menos)**, tu proyecto
+> puede tener un `.npmrc` con `@mlopez-raizell:registry=https://npm.pkg.github.com`
+> y, en el hosting o la integración continua, un token de ese registro. Con esa
+> línea, `npm install` sigue yendo a GitHub y pide un token que ya no hace
+> falta: **quita la línea del `.npmrc`** (y el fichero, si queda vacío) y la
+> variable con el token del hosting. `cms:comprobar` te avisa de las dos cosas.
+>
+> 🔴 Un token escrito en el `.npmrc` del proyecto sigue siendo un fallo: ese
+> fichero se versiona. Si alguna vez contiene uno, ese token está publicado:
+> revócalo.
 
 ## 4 · La clave pública del site
 
@@ -189,8 +193,8 @@ ahora y no al final.
 ## 9 · Dónde se despliega y con qué variables
 
 **Qué es.** El hosting del front y su configuración. Necesita las mismas
-variables que tu `.env.local`, más el token del punto 3 para poder instalar
-el SDK al construir.
+variables que tu `.env.local`. El SDK es público: el hosting lo instala sin
+credenciales.
 
 **Cómo se consigue.** Decide el hosting con el cliente y conéctalo a tu
 repositorio (punto 2). Confirma con Raizell si las claves de **producción**
@@ -201,7 +205,6 @@ entornos del hosting no la ve el otro:
 
 | Variable | Vista previa | Producción |
 |---|---|---|
-| Token para instalar el SDK (punto 3) | ✓ | ✓ |
 | Clave pública (punto 4) | Opcional | ✓ |
 | Clave de previsualización (punto 5) | ✓ | ✓ si hay «Ver cómo queda» |
 | Direcciones (punto 6) | ✓ | ✓ |

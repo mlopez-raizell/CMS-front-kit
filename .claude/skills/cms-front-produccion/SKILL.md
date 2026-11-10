@@ -47,7 +47,6 @@ ha recorrido hasta ese día.
 
 | Variable | Vista previa | Producción | Nota |
 |---|---|---|---|
-| Token para instalar el SDK | ✓ | ✓ | Los dos entornos construyen |
 | Clave pública | Opcional | ✓ | |
 | Clave de previsualización | ✓ | ✓ si hay «Ver cómo queda» | Solo servidor |
 | Direcciones de la API y de los medios | ✓ | ✓ | Con `https://` |
@@ -57,38 +56,37 @@ Trampas que ya han ocurrido:
 
 | Trampa | Cómo se ve | Qué hacer |
 |---|---|---|
-| Una variable marcada para **un solo entorno** | En el otro: `401 authentication token not provided` al instalar el SDK, o la web sin clave | Marca los dos entornos y mira la fila de la variable, no solo que exista |
+| Una variable marcada para **un solo entorno** | En el otro: la web sin clave, o un `401` del contenido | Marca los dos entornos y mira la fila de la variable, no solo que exista |
 | Variables nuevas, despliegue viejo | Todo igual que antes | Las variables solo afectan a despliegues **nuevos**: redespliega, sin caché de build |
 | **Un redespliegue antiguo «sale bien»** | Falso éxito | Construye el código de aquel commit, que quizá ni usaba el SDK. Comprueba el commit y el entorno del despliegue |
 | Valor pegado a medias | Falla igual que si faltara | Una sola línea, sin comillas ni espacios ni salto final |
 | Build hecho en tu máquina y subido ya construido | La clave de previsualización viaja dentro del artefacto | Despliega siempre desde el repositorio |
 
-## Instalar el SDK privado en el hosting
+## Instalar el SDK en el hosting
 
-El `.npmrc` del proyecto solo dice **de dónde** sale el SDK. El token va en
-una variable secreta del hosting: o una variable que contiene la línea
-`//<registro>/:_authToken=<token>` (algunos hostings la escriben como `.npmrc`
-al construir), o una variable que el `.npmrc` referencia como `${VARIABLE}`.
+El SDK es **público** (registro de npm): el hosting lo instala **sin token y
+sin `.npmrc`**. No hay ninguna variable que dar de alta para eso.
+
+Si el build falla al instalarlo, casi siempre es un resto de cuando el SDK
+salía de GitHub Packages (kit 0.4.0 o anterior):
 
 | Log del build | Significa | Qué hacer |
 |---|---|---|
-| `401` y `authentication token not provided` | npm **no ha recibido ningún token** | La variable no existe en ese entorno, su nombre no es el que el hosting espera o el valor está mal pegado |
-| `403` o `404` | Llegó un token, pero no puede leer el paquete | Está revocado o sin permiso: pide otro a Raizell |
+| `401` o `authentication token not provided` al instalar `@mlopez-raizell/raizell-sdk` | El `.npmrc` **del repositorio** manda el ámbito `@mlopez-raizell` a `npm.pkg.github.com`, que sí pide token | Quita esa línea de `.npmrc` (y el fichero, si queda vacío), haz commit y redespliega |
+| `404` en `@mlopez-raizell/raizell-sdk` | El registro consultado no es el público, o la versión pedida en `package.json` no existe | Mira el `.npmrc` y la versión: `npm view @mlopez-raizell/raizell-sdk versions` |
+| El mismo `401` con el `.npmrc` ya limpio | Una variable del hosting (`NPM_CONFIG_…`, `NPM_TOKEN`, una línea `_authToken`) sigue desviando el ámbito | Quita esa variable de **los dos entornos** (vista previa y producción) |
 
-**Separa «el token vale» de «el token llega».** La persona (no el agente) lo
-prueba en su terminal con el mismo token que puso en el hosting. El registro,
-el ámbito y el paquete están en `cms-front-kit.json` (`sdk`), y la `/` del
-nombre del paquete va como `%2F`:
+Lo que sí sigue siendo una credencial son las **claves del site** (tabla de
+arriba): no se confunden con el SDK.
+
+**Comprobarlo sin el hosting**, en tu terminal, desde una carpeta sin `.npmrc`:
 
 ```bash
-read -rs T && curl --max-time 20 -s -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $T" "https://<registro>/@<ámbito>%2F<paquete>"; unset T
+npm view @mlopez-raizell/raizell-sdk version --@mlopez-raizell:registry=https://registry.npmjs.org
 ```
 
-No enseña nada mientras escribes: pega el token y pulsa Enter. **`200`** → el
-token vale y el fallo está en cómo llega al build. **`401`, `403` o `404`** →
-el token es el problema. Con un SDK vinculado a un repositorio privado, el
-token puede necesitar, además de leer paquetes, permiso de lectura sobre ese
-repositorio (visto en otros fronts de Raizell): los tokens los emite Raizell.
+Si contesta una versión, el SDK se puede instalar sin ninguna credencial y el
+fallo está en lo que el proyecto o el hosting le añaden.
 
 ## El build compila y el despliegue se rechaza
 
@@ -163,7 +161,7 @@ peticiones y **cae toda la web**, también para los visitantes reales.
 
 - Una variable que solo existe en un entorno del hosting.
 - La clave de previsualización en una variable con prefijo público del framework.
-- Un redespliegue como única prueba de que el token funciona.
+- Un redespliegue como única prueba de que las claves del hosting funcionan.
 - Una ruta genérica que llama al CMS antes de comprobar que la ruta existe.
 - Producción sin ninguna comprobación hecha con la clave pública.
 - Fusionar sin saber cómo volver al despliegue anterior.

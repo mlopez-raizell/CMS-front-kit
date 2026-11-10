@@ -24,7 +24,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { leerManifiesto } from "./lib/manifiesto.mjs";
 import {
-  VARIABLES, cargarSdk, codigoDe, direccion, entornoDe, esPublica, gestorDe, habitual, leerEnv, lineaDeRegistro,
+  VARIABLES, cargarSdk, codigoDe, direccion, entornoDe, esPublica, gestorDe, habitual, leerEnv, ambitoDelSdk, lineasDeRegistroRetirado,
   localizarSdk, permiteHost, rellena, retirada, sinSecretos, variablesTapadas,
 } from "./lib/entorno.mjs";
 
@@ -94,17 +94,23 @@ function repositorio() {
 }
 
 // ── 3. Acceso al SDK ────────────────────────────────────────────────────────
+// El SDK es público (registro de npm): no hace falta token ni `.npmrc`. Lo que
+// sí puede romper la instalación es un `.npmrc` de una versión anterior del kit,
+// que manda el SDK a GitHub Packages, y un token escrito en un `.npmrc` versionado.
 function accesoAlSdk(manifiesto) {
   seccion("3 · Acceso al SDK");
-  const linea = lineaDeRegistro(manifiesto);
-  const scope = linea.split(":")[0];
   const npmrc = join(RAIZ, ".npmrc");
   const texto = existsSync(npmrc) ? readFileSync(npmrc, "utf8") : "";
 
-  if (texto.split(/\r?\n/).some((l) => l.trim().startsWith(`${scope}:registry=`))) {
-    ok(`.npmrc del proyecto apunta ${scope} a su registro`);
+  const viejas = lineasDeRegistroRetirado(texto, manifiesto);
+  if (viejas.length > 0) {
+    falta(
+      "el .npmrc del proyecto manda el SDK a un registro que ya no se usa",
+      "El SDK sale ahora de npm público, sin token. Quita de .npmrc las líneas del ámbito " +
+        `${ambitoDelSdk(manifiesto)} y las \`_authToken\` del registro antiguo (su valor no se muestra).`,
+    );
   } else {
-    falta(`.npmrc del proyecto no dice de dónde sale ${scope}`, `Añade esta línea a .npmrc (no lleva secreto, se versiona):\n${linea}`);
+    ok("el .npmrc del proyecto no desvía el SDK a otro registro");
   }
 
   const tokenEscrito = texto
@@ -113,8 +119,8 @@ function accesoAlSdk(manifiesto) {
   if (tokenEscrito) {
     falta(
       "el .npmrc del proyecto lleva un token escrito",
-      "Quítalo de ahí y avisa a Raizell para que lo revoque: un .npmrc versionado lo publica.\n" +
-        "El token va en ~/.npmrc (fuera del repo) o como variable de entorno en el hosting.",
+      "Quítalo de ahí: un .npmrc versionado lo publica. El SDK es público y no lo necesita; " +
+        "si es un token tuyo de otro servicio, revócalo y ponlo en ~/.npmrc o en una variable de entorno.",
     );
   }
 
@@ -126,23 +132,27 @@ function accesoAlSdk(manifiesto) {
 
   const instalar = `${gestorDe(RAIZ).instalar} ${sdk.nombre}`;
   if (SIN_RED) {
-    falta(`el SDK (${sdk.nombre}) no está instalado`, `Con el token puesto (CHECKLIST 3): ${instalar}`);
+    falta(`el SDK (${sdk.nombre}) no está instalado`, `Es público, sin token: ${instalar}`);
     return false;
   }
 
-  const r = ejecutar("npm", ["view", sdk.nombre, "version", `--registry=${manifiesto.sdk.registro}`]);
+  // El ámbito se fija en la propia consulta: un `@ámbito:registry=` del `~/.npmrc`
+  // manda sobre `--registry`, y haría la comprobación contra otro sitio.
+  const r = ejecutar("npm", ["view", sdk.nombre, "version", `--${ambitoDelSdk(manifiesto)}:registry=${manifiesto.sdk.registro}`]);
   const salida = `${r.stdout ?? ""}${r.stderr ?? ""}`;
   if (r.status === 0 && r.stdout.trim() !== "") {
-    falta(`tienes acceso al SDK, pero no está instalado`, instalar);
-  } else if (/E401|401 Unauthorized|authentication/i.test(salida)) {
+    falta("el SDK está disponible en npm, pero no está instalado en el proyecto", instalar);
+  } else if (/E401|401 Unauthorized|authentication|E403|403 Forbidden/i.test(salida)) {
     falta(
-      "el registro no te reconoce: falta el token o ha caducado",
-      "CHECKLIST 3 — el token te lo da Raizell. Va en ~/.npmrc, fuera del proyecto.",
+      "el registro pide credenciales para leer el SDK, y no debería",
+      "Mira ~/.npmrc y las variables NPM_CONFIG_*: algo manda el ámbito del SDK a un registro privado. " +
+        "El SDK es público en https://registry.npmjs.org.",
     );
-  } else if (/E403|E404|403 Forbidden|404 Not Found|permission/i.test(salida)) {
+  } else if (/E404|404 Not Found/i.test(salida)) {
     falta(
-      "el token que tienes no puede leer el SDK",
-      "CHECKLIST 3 — pide a Raizell un token vigente: el tuyo está revocado o no tiene ese permiso.",
+      "npm no encuentra el SDK en el registro público",
+      `Comprueba el nombre (${sdk.nombre}) y que ~/.npmrc no desvíe el ámbito ${ambitoDelSdk(manifiesto)}. ` +
+        "Si el nombre y la red están bien, avisa a Raizell.",
     );
   } else {
     falta(
