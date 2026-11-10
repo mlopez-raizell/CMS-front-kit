@@ -15,20 +15,53 @@ cualquiera de ellas.
 En un proyecto: `npm run cms:estado` para ver la versión instalada y
 `npm run cms:actualizar` para traer la última.
 
-## Sin publicar
+## v0.5.0 — 2026-11-10
 
 ### Qué trae
 
+- **El SDK se descarga del registro público de npm** (`https://registry.npmjs.org`),
+  **sin token y sin `.npmrc`**. Hasta ahora salía de GitHub Packages y exigía
+  un token de lectura en cada máquina y en cada entorno del hosting.
+  `cms-front-kit.json` cambia `sdk.registro` y gana `sdk.retirados` (los
+  registros donde el SDK ya no está).
+- **`cms:instalar` ya no crea `.npmrc`.** Si el proyecto trae el de una versión
+  anterior, dice qué líneas quitar (nunca muestra el valor de un token).
+- **`cms:comprobar` (punto 3) cambia de sentido:** ya no pide un token. Marca
+  como fallo un `.npmrc` que sigue mandando `@mlopez-raizell` a GitHub
+  Packages, sigue marcando un token escrito en un `.npmrc` versionado, y
+  consulta el SDK en npm público fijando el ámbito en la propia consulta (un
+  `@ámbito:registry=` de `~/.npmrc` manda sobre `--registry`).
+- **CHECKLIST punto 3** pasa de «El token para descargar el SDK» a «Poder
+  descargar el SDK» (el número se conserva, para no mover las remisiones). El
+  punto 9 ya no incluye el token entre las variables del hosting, y se pide a
+  Raizell solo lo de los puntos 4, 5 y 7.
+- **Skills `cms-front-empezar` y `cms-front-produccion`:** sin token del SDK;
+  la segunda trae la tabla de qué hacer si el build del hosting todavía falla
+  al instalarlo (casi siempre, un `.npmrc` antiguo).
 - **Skill nueva `cms-front-bloques`**: cómo pinta el front cada bloque según
   su **plantilla** (SDK `0.9.0`) y cómo hacer que funcionen los enlaces a una
   sección de la propia página con el **ancla** de cada bloque (SDK `0.10.0`).
   Sale de un fallo visto: anclas escritas a mano en el botón y repetidas en el
   front, que se rompían en silencio con una errata.
 
-### Qué hay que hacer en un proyecto
+### Al actualizar desde v0.4.0 o anterior
 
-- Nada para instalarla: llega con `npm run cms:actualizar`. Para usar los dos
-  datos, el SDK tiene que ser `0.10.0` o posterior.
+🔴 **Esto sí obliga a tocar el proyecto** si tiene el `.npmrc` de GitHub:
+
+1. `npm run cms:actualizar`.
+2. Borra de `.npmrc` la línea `@mlopez-raizell:registry=https://npm.pkg.github.com`
+   y cualquier `_authToken` de ese registro (el fichero entero, si no tiene
+   nada más). `cms:instalar` y `cms:comprobar` te dicen cuáles.
+3. Quita del hosting (vista previa **y** producción) y de la integración
+   continua la variable con el token de GitHub Packages, si solo servía para
+   el SDK.
+4. 🔴 **En npm solo existe la `0.10.0`** (y las siguientes): las anteriores se
+   quedaron en GitHub Packages. Si tu `package.json` pide una `0.x` menor,
+   súbela: `npm install @mlopez-raizell/raizell-sdk@^0.10.0`. Eso trae además
+   la plantilla y el ancla de cada bloque (skill `cms-front-bloques`).
+5. Borra `node_modules` y el lockfile del SDK si arrastran la URL del registro
+   antiguo, reinstala y vuelve a desplegar.
+6. `npm run cms:comprobar` tiene que salir con el punto 3 en verde.
 
 ## v0.4.0 — 2026-10-27
 
