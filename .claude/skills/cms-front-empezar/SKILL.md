@@ -33,18 +33,18 @@ la checklist sin resolver. Se comprueba antes, no se depura después.
 | No | En su lugar |
 |---|---|
 | Pedir una clave o un token por el chat | Decir en qué fichero y variable la pone la persona |
-| Crear un token de GitHub para el SDK | Ese token lo da Raizell: se le pide |
+| Pedir o crear un token para el SDK | No hace falta: el SDK es público (npm). Si algo lo pide, hay un `.npmrc` antiguo que desvía el ámbito |
 | Escribir una clave en `.env.local` | Dejar su variable vacía y avisar a la persona |
 | Leer `.env.local` o `~/.npmrc` para «comprobar» | Ejecutar `cms:comprobar`, que no enseña valores |
 | Copiar claves de otro proyecto de la máquina | Parar y pedir las de este site |
-| Poner un token en el `.npmrc` del proyecto | Ese fichero se versiona: solo lleva el registro |
+| Poner un token en el `.npmrc` del proyecto | Ese fichero se versiona, y el SDK no necesita ninguno |
 
 ## Síntoma → punto de la checklist
 
 | Lo que se ve | Punto |
 |---|---|
-| Error de autenticación al instalar el SDK | 3 — falta el token: lo da Raizell |
-| «No encontrado» o «prohibido» al instalar el SDK, con el token puesto | 3 — el token está revocado o no vale: se pide otro a Raizell |
+| Error de autenticación (`401`) al instalar el SDK | 3 — hay un `.npmrc` (del proyecto o `~/.npmrc`) que manda `@mlopez-raizell` a GitHub Packages: se quita esa línea. El SDK es público |
+| «No encontrado» o «prohibido» al instalar el SDK | 3 — casi siempre el mismo `.npmrc` antiguo; si no, `npm view @mlopez-raizell/raizell-sdk version` y avisar a Raizell |
 | No hay dónde subir el trabajo | 2 — falta el repositorio en la cuenta del desarrollador |
 | El site rechaza la clave | 4 o 5 — mal copiada, revocada, o de otro entorno |
 | El site no está disponible con la clave pública | 7 — está en construcción: se trabaja con la de previsualización |
@@ -52,8 +52,8 @@ la checklist sin resolver. Se comprueba antes, no se depura después.
 | `cms:comprobar` dice «está vacía en .env.local y tapa la de .env» | Borra o comenta esa línea de `.env.local`: los frameworks leen ese fichero por encima y una variable vacía gana |
 | Las imágenes no se pueden componer | 6 — falta la dirección de medios en `.env.local`: está en `.env.local.example` |
 | Una dirección no responde | 6 — `npm run cms:actualizar` trae la vigente |
-| El build del hosting da `401` y «authentication token not provided» | 3 y 9 — el token no llega a **ese entorno** del hosting: skill `cms-front-produccion` |
-| En local funciona y en el hosting no | 9 — faltan variables en ese entorno, o el token: skill `cms-front-produccion` |
+| El build del hosting da `401` al instalar el SDK | 3 y 9 — el `.npmrc` del repositorio manda el SDK a GitHub Packages: se quita. Skill `cms-front-produccion` |
+| En local funciona y en el hosting no | 9 — faltan variables en ese entorno: skill `cms-front-produccion` |
 | El build pasa y el despliegue se rechaza («invalid runtime») | 9 — la versión de Node del proyecto: skill `cms-front-produccion` |
 
 ## Racionalizaciones
