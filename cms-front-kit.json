@@ -1,18 +1,22 @@
 {
   "nombre": "cms-front-kit",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "repositorio": "https://github.com/mlopez-raizell/CMS-front-kit.git",
   "sdk": {
     "paquete": "@mlopez-raizell/raizell-sdk",
     "registro": "https://registry.npmjs.org",
-    "retirados": ["https://npm.pkg.github.com"]
+    "retirados": ["https://npm.pkg.github.com"],
+    "minimo": "0.12.0"
   },
   "direcciones": {
     "api": "https://apicms.raizell.com",
-    "medios": "https://medios.rzlcdn.com"
+    "medios": "https://mrkbhppzvdhqxzaorpja.supabase.co/storage/v1/object/public/raizell-medios"
   },
   "retiradas": {
-    "medios": ["https://mrkbhppzvdhqxzaorpja.supabase.co/storage/v1/object/public/medios"]
+    "medios": [
+      "https://mrkbhppzvdhqxzaorpja.supabase.co/storage/v1/object/public/medios",
+      "https://medios.rzlcdn.com"
+    ]
   },
   "ficheros": [
     "AGENTS.cms.md",

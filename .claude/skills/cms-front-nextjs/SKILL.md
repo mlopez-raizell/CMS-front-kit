@@ -19,7 +19,7 @@ SDK instalado (su README y sus `.d.ts`), y el contenido, con la skill
 | **El cliente se crea con las dos direcciones del entorno**, la de la API y la de los medios | La que el SDK trae por defecto no tiene por qué ser la vigente; las del kit se comprueban |
 | **Ninguna clave en variables `NEXT_PUBLIC_`** | Next.js las incrusta en el JavaScript que descarga cada visitante |
 | **Ninguna clave en una URL** | Las URL quedan en historiales, capturas y cabeceras hacia terceros |
-| **Las URL de medios las compone el SDK** | El dominio de medios cambia por entorno; una URL montada a mano acaba indexada |
+| **Las URL de medios las compone el SDK** | Cada medio trae su base (`base_url`, SDK 0.12.0 o posterior) y la de `MEDIA_BASE_URL` es solo el respaldo: el almacén ha cambiado de dirección y volverá a hacerlo; una URL montada a mano acaba indexada y rota |
 | **La previsualización usa lo que trae el SDK** | El canje del pase y el corte del modo borrador ya están resueltos ahí; rehacerlos es donde se filtra la clave |
 
 ## Dónde va cada cosa
@@ -38,7 +38,7 @@ SDK instalado (su README y sus `.d.ts`), y el contenido, con la skill
 |---|---|
 | Texto enriquecido | Llega como **árbol de nodos**, no como HTML. Se pinta con componentes propios; el SDK trae un atajo a HTML si no hace falta más. |
 | Enlaces dentro del texto | Se validan con lo que trae el SDK antes de ir a un `href` |
-| Imágenes | Se piden al SDK ya compuestas; el texto alternativo viene del CMS. Si se pintan con `next/image`, el dominio de `MEDIA_BASE_URL` tiene que estar en `images.remotePatterns`: sin él fallan aunque la URL sea correcta. `cms:comprobar` lo avisa |
+| Imágenes | Se piden al SDK ya compuestas; el texto alternativo viene del CMS. Si se pintan con `next/image`, el dominio de la base de medios (con su ruta, si la lleva) tiene que estar en `images.remotePatterns`: sin él fallan aunque la URL sea correcta. `cms:comprobar` dice el patrón exacto. Un campo de ficha que llega como clave suelta se compone cruzándolo con la lista de medios del SDK, nunca con `MEDIA_BASE_URL` a secas |
 | Contenido en varios idiomas | El idioma se pide en cada lectura; los idiomas activos los dice la configuración del site |
 | Módulos | Se pregunta si el site lo tiene activo antes de pintar su sección |
 
@@ -84,5 +84,5 @@ skill `cms-front-produccion`.
 - Una variable `NEXT_PUBLIC_` que contiene una clave.
 - Más de un sitio donde se crea el cliente.
 - Una URL de imagen construida con una plantilla de texto.
-- Un `remotePatterns` con un dominio de medios escrito que no es el de `MEDIA_BASE_URL`.
+- Un `remotePatterns` con un dominio de medios escrito que no es el de la base vigente de medios (la de `MEDIA_BASE_URL`).
 - Un `catch` que compara el mensaje del error en vez de su código.

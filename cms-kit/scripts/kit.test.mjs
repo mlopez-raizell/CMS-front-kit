@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { ambitoDelSdk, direccion, entornoDe, esPublica, habitual, leerEnv, lineaDeRegistro, lineasDeRegistroRetirado, localizarSdk, registroPublico, permiteHost, rellena, sinSecretos, variablesTapadas } from "./lib/entorno.mjs";
+import { ambitoDelSdk, direccion, entornoDe, esPublica, habitual, leerEnv, lineaDeRegistro, lineasDeRegistroRetirado, localizarSdk, registroPublico, permiteHost, rellena, retirada, sinSecretos, variablesTapadas } from "./lib/entorno.mjs";
 import { forma, formaEnLineas, superficie } from "./lib/forma.mjs";
 import { expandir, leerManifiesto } from "./lib/manifiesto.mjs";
 import { comparar, tramoChangelog } from "./kit.mjs";
@@ -442,6 +442,60 @@ test("comprobar: next.config con remotePatterns que no deja pasar el dominio de 
   writeFileSync(join(dir, "next.config.ts"), `export default { images: { remotePatterns: [{ protocol: "https", hostname: "*.supabase.co" }] } };\n`);
   const r = comprobar(dir, ["--sin-red"]);
   assert.ok(r.salida.includes("! next.config no deja pasar las imágenes de 127.0.0.1"), r.salida);
+});
+
+test("el kit trae la base de medios vigente (Supabase) y da por retirada la de R2 y la anterior de Supabase", () => {
+  const m = leerManifiesto(KIT);
+  const base = habitual(m, "medios");
+  assert.equal(base, "https://mrkbhppzvdhqxzaorpja.supabase.co/storage/v1/object/public/raizell-medios");
+  assert.equal(retirada(m, "medios", base), false, "la vigente no puede estar retirada");
+  assert.equal(retirada(m, "medios", "https://medios.rzlcdn.com"), true, "R2 sigue contestando, pero lo nuevo ya no está ahí");
+  assert.equal(retirada(m, "medios", "https://medios.rzlcdn.com/"), true, "con barra final también");
+  assert.equal(retirada(m, "medios", "https://mrkbhppzvdhqxzaorpja.supabase.co/storage/v1/object/public/medios"), true);
+  assert.equal(m.sdk.minimo, "0.12.0");
+});
+
+test("comprobar: una base de medios con ruta pide el patrón con su ruta en next.config", (t) => {
+  const base = `${LOCAL}/storage/v1/object/public/raizell-medios`;
+  const dir = frontListo(t, { env: entorno({ medios: base }) });
+  writeFileSync(join(dir, "next.config.ts"), `export default { images: { remotePatterns: [{ protocol: "https", hostname: "otro.ejemplo.test" }] } };\n`);
+  const r = comprobar(dir, ["--sin-red"]);
+  assert.ok(r.salida.includes("! next.config no deja pasar las imágenes de 127.0.0.1"), r.salida);
+  assert.ok(r.salida.includes(`pathname: "/storage/v1/object/public/raizell-medios/**"`), r.salida);
+});
+
+test("comprobar: una base de medios sin ruta pide solo el anfitrión", (t) => {
+  const dir = frontListo(t, { env: entorno({ medios: LOCAL }) });
+  writeFileSync(join(dir, "next.config.ts"), `export default { images: { remotePatterns: [{ protocol: "https", hostname: "otro.ejemplo.test" }] } };\n`);
+  const r = comprobar(dir, ["--sin-red"]);
+  assert.ok(r.salida.includes("! next.config no deja pasar las imágenes de 127.0.0.1"), r.salida);
+  assert.doesNotMatch(r.salida, /pathname:/);
+});
+
+const conSdkDeVersion = (dir, version) => {
+  const f = join(dir, "node_modules", ...SDK.split("/"), "package.json");
+  const pkg = JSON.parse(readFileSync(f, "utf8"));
+  writeFileSync(f, JSON.stringify({ ...pkg, version }));
+};
+
+test("comprobar: un SDK anterior a la 0.12.0 avisa de que no trae la base de cada medio", (t) => {
+  const dir = frontListo(t);
+  conSdkDeVersion(dir, "0.11.0");
+  const r = comprobar(dir, ["--sin-red"]);
+  assert.ok(r.salida.includes("! el SDK 0.11.0 es anterior a la 0.12.0, que es la que trae la base de cada medio"), r.salida);
+  assert.match(r.salida, /@mlopez-raizell\/raizell-sdk@0\.12\.0/);
+  assert.match(r.salida, /respuesta_invalida/);
+  assert.equal(r.estado, 0, "es un aviso, no impide desarrollar");
+});
+
+test("comprobar: el SDK 0.12.0 o posterior no avisa de la base de los medios", (t) => {
+  for (const version of ["0.12.0", "0.13.2", "1.0.0"]) {
+    const dir = frontListo(t);
+    conSdkDeVersion(dir, version);
+    const r = comprobar(dir, ["--sin-red"]);
+    assert.match(r.salida, new RegExp(`SDK instalado: @mlopez-raizell/raizell-sdk ${version.replaceAll(".", "\\.")}`));
+    assert.doesNotMatch(r.salida, /es anterior a la 0\.12\.0/, version);
+  }
 });
 
 test("comprobar: next.config que sí deja pasar el dominio de los medios no avisa", (t) => {

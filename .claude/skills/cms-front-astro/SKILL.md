@@ -20,7 +20,7 @@ Para llevarlo a producción, `cms-front-produccion`.
 | **Ninguna clave en una variable `PUBLIC_`** | En Astro, las `PUBLIC_*` se incrustan en el JavaScript de cada visitante; las demás solo las ve el servidor |
 | **Las claves van solo en `.env.local`**, y ahí nunca vacías si tienen valor en `.env` | Astro lee `.env.local` por encima de `.env` y una variable vacía gana: `cms:comprobar` lo avisa |
 | **El cliente se crea con las dos direcciones del entorno**, la de la API y la de los medios | La que el SDK trae por defecto no tiene por qué ser la vigente |
-| **Las URL de medios las compone el SDK** | El dominio de medios cambia por entorno |
+| **Las URL de medios las compone el SDK** | Cada medio trae su base (`base_url`, SDK 0.12.0 o posterior) y `MEDIA_BASE_URL` es solo el respaldo: el almacén ha cambiado de dirección y volverá a hacerlo |
 
 ## Salida: servidor o estático
 
