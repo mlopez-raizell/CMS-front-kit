@@ -23,6 +23,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { leerManifiesto } from "./lib/manifiesto.mjs";
+import { comparar } from "./kit.mjs";
 import {
   VARIABLES, cargarSdk, codigoDe, direccion, entornoDe, esPublica, gestorDe, habitual, leerEnv, ambitoDelSdk, lineasDeRegistroRetirado,
   localizarSdk, permiteHost, rellena, retirada, sinSecretos, variablesTapadas,
@@ -127,6 +128,15 @@ function accesoAlSdk(manifiesto) {
   const sdk = localizarSdk(RAIZ, manifiesto);
   if (sdk.version) {
     ok(`SDK instalado: ${sdk.nombre} ${sdk.version}`);
+    const minimo = manifiesto?.sdk?.minimo;
+    if (minimo && comparar(`v${sdk.version}`, `v${minimo}`) < 0) {
+      aviso(
+        `el SDK ${sdk.version} es anterior a la ${minimo}, que es la que trae la base de cada medio`,
+        `Actualízalo: ${gestorDe(RAIZ).instalar} ${sdk.nombre}@${minimo}\n` +
+          "Con uno anterior los medios se componen solo con MEDIA_BASE_URL, los PDF no fuerzan la descarga " +
+          "y un paquete de salida con un enlace a un PDF da respuesta_invalida.",
+      );
+    }
     return true;
   }
 
@@ -287,6 +297,13 @@ async function direcciones(entorno, manifiesto) {
   }
 }
 
+// Si la base de los medios lleva ruta (Supabase Storage: `/storage/v1/object/public/<contenedor>`),
+// el patrón la acota con esa misma ruta: `<ruta>/**`, que es lo que next/image admite. Sin ruta, solo el anfitrión.
+function rutaDeLosMedios(base) {
+  const ruta = new URL(base).pathname.replace(/\/+$/, "");
+  return ruta ? `, pathname: "${ruta}/**"` : "";
+}
+
 // Un front Next.js con `next/image` solo pinta imágenes de los dominios que su
 // `next.config` deja pasar: con la base bien puesta y el dominio sin añadir, las
 // imágenes fallan igual. Se lee el fuente; no se evalúa.
@@ -299,7 +316,8 @@ function imagenesDeNext(base) {
   if (permiteHost(texto, host)) return;
   aviso(
     `next.config no deja pasar las imágenes de ${host}`,
-    `Si pintas con next/image, añade el dominio a images.remotePatterns en ${fichero}:\n{ protocol: "${new URL(base).protocol.slice(0, -1)}", hostname: "${host}" }`,
+    `Si pintas con next/image, añade el dominio a images.remotePatterns en ${fichero}:\n` +
+      `{ protocol: "${new URL(base).protocol.slice(0, -1)}", hostname: "${host}"${rutaDeLosMedios(base)} }`,
   );
 }
 

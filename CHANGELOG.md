@@ -15,6 +15,44 @@ cualquiera de ellas.
 En un proyecto: `npm run cms:estado` para ver la versión instalada y
 `npm run cms:actualizar` para traer la última.
 
+## v0.6.0 — 2026-11-13
+
+### Qué trae
+
+- **Los medios se sirven desde Supabase Storage**, no desde R2. `cms-front-kit.json`:
+  `direcciones.medios` pasa a la base nueva
+  (`…/storage/v1/object/public/raizell-medios`), y `retiradas.medios` gana
+  `https://medios.rzlcdn.com` (R2 sigue contestando con lo antiguo, pero lo
+  subido desde el 2026-11-13 solo está en Supabase). **El nombre de la variable
+  no cambia** (`MEDIA_BASE_URL`): quien actualice el kit solo tiene que copiar el
+  valor nuevo a su `.env.local` y al hosting.
+- **Con el SDK 0.12.0 o posterior cada medio trae su propia base** (`base_url`)
+  y el SDK la usa antes que `MEDIA_BASE_URL`, que queda como **respaldo**. Así
+  el almacén puede volver a cambiar de dirección sin tocar los fronts. Los PDF
+  se descargan (el SDK añade el parámetro de descarga). El manifiesto gana
+  `sdk.minimo` (`0.12.0`).
+- **`cms:comprobar`:**
+  - avisa si el SDK instalado es anterior a `sdk.minimo` (es un aviso, no impide
+    desarrollar);
+  - marca como fallo `MEDIA_BASE_URL` con la base de R2 o con la anterior de
+    Supabase, y dice la vigente;
+  - el aviso de `next/image` ahora da el patrón entero, **con la ruta** de la
+    base (`pathname: "<ruta>/**"`) cuando la lleva.
+- **CHECKLIST punto 6, skills `cms-front-nextjs`, `cms-front-astro`,
+  `cms-front-empezar` y `cms-front-produccion` y `.env.local.example`:** la base
+  de medios es el respaldo, las URL las compone siempre el SDK, un campo de
+  ficha que llega como clave suelta se cruza con la lista de medios, y qué hacer
+  si las imágenes dan 404 tras el cambio.
+
+### Qué hay que hacer en un front ya instalado
+
+1. `npm run cms:actualizar`.
+2. Copiar `MEDIA_BASE_URL` de `.env.local.example` a `.env.local` y a las
+   variables del hosting.
+3. Actualizar el SDK a la 0.12.0 o posterior (desde npm público).
+4. Si pinta con `next/image`: añadir el patrón que dice `cms:comprobar`.
+5. Volver a desplegar.
+
 ## v0.5.0 — 2026-11-10
 
 ### Qué trae

@@ -49,7 +49,7 @@ ha recorrido hasta ese día.
 |---|---|---|---|
 | Clave pública | Opcional | ✓ | |
 | Clave de previsualización | ✓ | ✓ si hay «Ver cómo queda» | Solo servidor |
-| Direcciones de la API y de los medios | ✓ | ✓ | Con `https://` |
+| Direcciones de la API y de los medios | ✓ | ✓ | Con `https://`. La de medios es el respaldo; con el SDK 0.12.0 o posterior cada medio trae la suya. Si el hosting la tiene con la de R2 (`medios.rzlcdn.com`), cámbiala y vuelve a desplegar |
 | Interruptor de borradores del proyecto | ✓ | **❌ nunca** | En producción enseñaría lo no publicado a todo el mundo, y sin caché |
 
 Trampas que ya han ocurrido:

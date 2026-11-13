@@ -116,15 +116,20 @@ de publicarlo, y trabajar mientras el site está en construcción (punto 7).
 **Qué es.** Dos direcciones, las mismas para todos los fronts:
 
 - La de la **API**, de donde se lee el contenido.
-- La **base de los medios**, con la que se componen las URL de imágenes y
-  documentos.
+- La **base de los medios**, con la que se componen las URL de imágenes,
+  vídeos y documentos. Desde el SDK 0.12.0 **cada medio que llega de la API
+  trae su propia base** y el SDK usa esa; la de tu `.env.local` es el
+  **respaldo** (paquetes de salida anteriores, o un campo que llega como
+  clave suelta).
 
 **Cómo se consigue.** **No hay que pedirlas: las trae el kit.** El instalador
 las deja puestas en `.env.local.example` y en tu `.env.local`. No son
 secretas.
 
 **Cómo se usan.** Tu front se las pasa al SDK al crear el cliente, **las
-dos**. No cuentes con la dirección que el SDK traiga por defecto.
+dos**. No cuentes con la dirección que el SDK traiga por defecto. Las URL de
+los medios las compone siempre el SDK, nunca a mano: así el almacén puede
+cambiar de dirección sin que tengas que tocar nada.
 
 **Cómo se comprueba.** `npm run cms:comprobar` llama a las dos y te dice
 si siguen respondiendo.
@@ -140,12 +145,23 @@ Después, copia la nueva de `.env.local.example` a tu `.env.local` y a las
 variables del hosting.
 
 Si pintas con `next/image`, el dominio de la base de medios tiene que estar
-en `images.remotePatterns` de tu `next.config`. Al cambiar la base, cambia
-también ese dominio.
+en `images.remotePatterns` de tu `next.config`, **con su ruta** si la base la
+lleva (hoy sí: `<anfitrión>/storage/v1/object/public/<contenedor>`).
+`npm run cms:comprobar` te dice exactamente el patrón que falta. Al cambiar la
+base, cambia también ese patrón: déjalo con el antiguo y con el nuevo mientras
+el contenido publicado siga apuntando al antiguo.
 
-> 🔴 **Una dirección retirada puede seguir respondiendo.** Pasó con los medios
-> en v0.4.0: la base vieja seguía sirviendo lo antiguo y lo subido después daba
-> 404. Por eso `cms:comprobar` no se fía de que responda: si tu dirección es
+> **El SDK tiene que ser el 0.12.0 o posterior.** Con uno anterior los medios
+> se componen solo con tu `MEDIA_BASE_URL`, los PDF no fuerzan la descarga y un
+> paquete de salida con un enlace a un PDF da `respuesta_invalida`. Se instala
+> **desde el registro público de npm** (no desde GitHub Packages, que ya no lo
+> tiene): `npm install @mlopez-raizell/raizell-sdk@latest`. `cms:comprobar` lo
+> avisa.
+
+> 🔴 **Una dirección retirada puede seguir respondiendo.** Ha pasado dos veces con
+> los medios (v0.4.0 y v0.6.0): la base vieja seguía sirviendo lo antiguo y lo
+> subido después daba 404. Hoy lo son la de Supabase anterior y la de
+> `medios.rzlcdn.com` (R2). Por eso `cms:comprobar` no se fía de que responda: si tu dirección es
 > una que el kit ya retiró, lo marca como fallo y te dice la vigente.
 
 > Si una dirección llega vacía, es que esta versión del kit todavía no la

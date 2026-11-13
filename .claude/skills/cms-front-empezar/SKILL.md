@@ -51,6 +51,7 @@ la checklist sin resolver. Se comprueba antes, no se depura después.
 | `cms:comprobar` avisa de que falta la clave pública, y hay de previsualización | 4 — es un aviso: puedes desarrollar; la necesitarás para producción |
 | `cms:comprobar` dice «está vacía en .env.local y tapa la de .env» | Borra o comenta esa línea de `.env.local`: los frameworks leen ese fichero por encima y una variable vacía gana |
 | Las imágenes no se pueden componer | 6 — falta la dirección de medios en `.env.local`: está en `.env.local.example` |
+| Las imágenes dan 404 o `cms:comprobar` dice que la base de medios está retirada | 6 — la base de medios cambió (v0.6.0: de R2 a Supabase). `npm run cms:actualizar`, copia la vigente a `.env.local` y al hosting, actualiza el SDK a la 0.12.0 y añade el patrón a `images.remotePatterns` |
 | Una dirección no responde | 6 — `npm run cms:actualizar` trae la vigente |
 | El build del hosting da `401` al instalar el SDK | 3 y 9 — el `.npmrc` del repositorio manda el SDK a GitHub Packages: se quita. Skill `cms-front-produccion` |
 | En local funciona y en el hosting no | 9 — faltan variables en ese entorno: skill `cms-front-produccion` |
